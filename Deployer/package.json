@@ -1,0 +1,20 @@
+{
+  "name": "deploy-single-service",
+  "version": "1.0.0",
+  "description": "Deploys single service to pay2.dev",
+  "main": "./bin/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "bin": {
+    "deployer": "./bin/index.js"
+  },
+  "dependencies": {
+    "colors": "^1.4.0",
+    "node-gzip": "^1.1.2",
+    "shelljs": "^0.8.4",
+    "yargs": "^16.2.0"
+  }
+}
