@@ -1,13 +1,9 @@
 {
-  "name": "deploy-single-service",
+  "name": "deployer",
   "version": "1.0.0",
-  "description": "Deploys single service to pay2.dev",
-  "main": "./bin/index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
+  "description": "Builds specified docker image and deploys to remote host.",
+  "main": "bin/index.js",
+  "author": "Vasilis Nicolaou",
   "bin": {
     "deployer": "./bin/index.js"
   },

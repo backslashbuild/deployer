@@ -35,9 +35,10 @@ async function savingStage(fileName, { imageName }) {
     shell.echo(err(saveResult.stderr));
     shell.exit(1);
   }
+
+  shell.echo(`Creating ${info(`${fileName}.tar.gz`)} ...`);
   const tarData = await fsPromises.readFile(`${fileName}.tar`);
   const compressed = await gzip(tarData);
-  shell.echo(`Creating ${info(`${fileName}.tar.gz`)} ...`);
   await fsPromises.writeFile(`${fileName}.tar.gz`, compressed);
 
   shell.echo(success("Saving completed."));
@@ -61,12 +62,14 @@ function copyingStage(fileName, { sshHost }) {
 //Loading stage
 function loadingStage(fileName, { sshHost }) {
   shell.echo(`Loading the image...`);
+
   shell.env.DOCKER_HOST = `ssh://${sshHost}`;
   const loadResult = shell.exec(`docker load -i ${fileName}.tar.gz`, { silent: true });
   if (loadResult.code !== 0) {
     shell.echo(err(loadResult.stderr));
     shell.exit(1);
   }
+
   shell.echo(success(`Loading completed.`));
   shell.echo("");
 }
@@ -74,6 +77,9 @@ function loadingStage(fileName, { sshHost }) {
 //Deployment stage
 function deploymentStage({ serviceName, imageName }) {
   shell.echo(`Deploying the image...`);
+  //TODO
+  shell.exec(`docker service update --image ${imageName} ${serviceName}`);
+
   shell.echo(success(`Deployment completed.`));
   shell.echo("");
 }
@@ -104,8 +110,6 @@ async function deploy(key, config) {
 }
 
 module.exports = { deploy };
-
-// deployImageOverSSH();
 
 //Notes:
 // Async shell - potentially useful to deploy multiple images
