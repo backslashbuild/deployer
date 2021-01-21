@@ -1,0 +1,8 @@
+{
+    "hello-world": {
+        "serviceName":"hello-world",
+        "imageName": "tutum/hello-world",
+        "build":"docker pull tutum/hello-world",
+        "sshHost":"user@example.com"
+    }
+}
