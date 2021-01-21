@@ -22,7 +22,7 @@ const options = yargs
   .option("s", { alias: "service", describe: "Service name", type: "string", demandOption: true })
   .option("u", {
     alias: "url",
-    describe: "Remote user host. Example: user@example.com. Default: roquser@pay2.dev.roqqett.com",
+    describe: "Remote user host. Example: user@example.com",
     type: "string",
     demandOption: true,
   }).argv;
@@ -30,6 +30,7 @@ const options = yargs
 const serviceName = options.service;
 const imageName = serviceName;
 const sshTarget = options.url;
+console;
 
 //Info stage
 function displayInfo() {
