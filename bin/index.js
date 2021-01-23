@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const yargs = require("yargs");
 const { exit } = require("process");
 const { err } = require("./utils");
@@ -5,7 +6,7 @@ const { deploy } = require("./deploy");
 fs = require("fs");
 
 const options = yargs
-  .usage("Usage: <service> -f <config file>")
+  .usage("Usage: <SERVICE> [OPTIONAL] -f <CONFIGFILE>")
   .option("f", {
     alias: "file",
     describe: "Path to the config file.",
