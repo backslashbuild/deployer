@@ -8,97 +8,168 @@ function generateFileName(key) {
   return `deployer-${key}-${Date.now()}`;
 }
 
-//Info stage
+/**
+ * @description Prints the information given from the config file.
+ * @param {Object} { serviceName, imageName, build, sshHost } - Information from the config file.
+ */
 function displayInfo({ serviceName, imageName, build, sshHost }) {
-  shell.echo(`Service name: ${info(serviceName)}`);
-  shell.echo(`Image name: ${info(imageName)}`);
-  shell.echo(`Build command: ${info(build)}`);
-  shell.echo(`SSH host: ${info(sshHost)}`);
-  shell.echo("");
+  log(`Service name: ${info(serviceName)}`);
+  log(`Image name: ${info(imageName)}`);
+  log(`Build command: ${info(build)}`);
+  log(`SSH host: ${info(sshHost)}`);
+  log("");
 }
 
-//Building stage
+/**
+ * @description Building stage. Builds the docker image using the build command provided in the config file.
+ * @param {Object} { build } - Information from the config file.
+ */
 function buildingStage({ build }) {
-  shell.echo(`Building the image...`);
+  log(`Building the image...`);
   shell.exec(build);
-  shell.echo(success(`Building completed.`));
-  shell.echo("");
+  log(success(`Building completed.`));
+  log("");
 }
 
-//Saving stage
-async function savingStage(fileName, { imageName }) {
-  shell.echo(`Saving image to ${info(`${fileName}.tar.gz`)} ...`);
+/**
+ * @description Saving stage. Saves the image into intermediate .tar file, then compresses it using gzip into .tar.gz.
+ * @param {string} fileName - The file name given to the .tar and the .tar.gz files.
+ * @param {Object} { imageName, sshHost } - Information from the config file.
+ */
+async function savingStage(fileName, { imageName, sshHost }) {
+  log(`Saving image to ${info(`${fileName}.tar.gz`)} ...`);
 
-  shell.echo(`Creating intermediate file ${info(`${fileName}.tar`)} ...`);
+  log(`Creating intermediate file ${info(`${fileName}.tar`)} ...`);
   const saveResult = shell.exec(`docker save ${imageName} -o ${fileName}.tar`);
   if (saveResult.code !== 0) {
-    shell.echo(err(saveResult.stderr));
-    shell.exit(1);
+    log(err(saveResult.stderr));
+    gracefulExit(fileName, { sshHost });
   }
 
-  shell.echo(`Creating ${info(`${fileName}.tar.gz`)} ...`);
+  log(`Creating ${info(`${fileName}.tar.gz`)} ...`);
   const tarData = await fsPromises.readFile(`${fileName}.tar`);
   const compressed = await gzip(tarData);
   await fsPromises.writeFile(`${fileName}.tar.gz`, compressed);
 
-  shell.echo(success("Saving completed."));
-  shell.echo("");
+  log(success("Saving completed."));
+  log("");
 }
 
-//Copying stage
+/**
+ * @description Copying stage. Copies the compressed image to the remote host using scp.
+ * @param {string} fileName - The name of the file to be copied to the remote host.
+ * @param {Object} { sshHost } - Information from the config file.
+ */
 function copyingStage(fileName, { sshHost }) {
-  shell.echo(`Copying ${info(`${fileName}.tar.gz`)} to ${info(sshHost)} ...`);
+  log(`Copying ${info(`${fileName}.tar.gz`)} to ${info(sshHost)} ...`);
   const copyResult = shell.exec(`scp ./${fileName}.tar.gz ${sshHost}:${fileName}.tar.gz`, {
     silent: true,
   });
   if (copyResult.code !== 0) {
-    shell.echo(err(copyResult.stderr));
-    shell.exit(1);
+    log(err(copyResult.stderr));
+    gracefulExit(fileName, { sshHost });
   }
-  shell.echo(success(`Copy successful.`));
-  shell.echo("");
+  log(success(`Copy successful.`));
+  log("");
 }
 
-//Loading stage
+/**
+ * @description Loading stage. Loads the image within the remote docker system.
+ * @param {string} fileName - The name of the file containing the image to be loaded.
+ * @param {Object} { sshHost } - Information from the config file.
+ */
 function loadingStage(fileName, { sshHost }) {
-  shell.echo(`Loading the image...`);
+  log(`Loading the image...`);
 
   shell.env.DOCKER_HOST = `ssh://${sshHost}`;
   const loadResult = shell.exec(`docker load -i ${fileName}.tar.gz`, { silent: true });
   if (loadResult.code !== 0) {
-    shell.echo(err(loadResult.stderr));
-    shell.exit(1);
+    log(err(loadResult.stderr));
+    gracefulExit(fileName, { sshHost });
   }
 
-  shell.echo(success(`Loading completed.`));
-  shell.echo("");
+  log(success(`Loading completed.`));
+  log("");
 }
 
-//Deployment stage
+/**
+ * @description Deploying stage. Deploys the image to the swarm in the remote host.
+ * @param {Object} { serviceName, imageName } - Information from the config file.
+ */
 function deploymentStage({ serviceName, imageName }) {
-  shell.echo(`Deploying the image...`);
+  log(`Deploying the image...`);
   //TODO
-  shell.exec(`docker service update --image ${imageName} ${serviceName}`);
+  // shell.exec(`docker service update --image ${imageName} ${serviceName}`);
 
-  shell.echo(success(`Deployment completed.`));
-  shell.echo("");
+  log(success(`Deployment completed.`));
+  log("");
 }
 
-//Cleanup stage
+/**
+ * @description Cleans up artefacts and exits the process gracefully, to be called in case of error in the main process.
+ * @param {string} fileName - The name of the files to be cleaned up.
+ * @param {Object} { sshHost } - Information from the config file.
+ */
+function gracefulExit(fileName, { sshHost }) {
+  log(err(`Failed to deploy ${SERVICE_KEY}. Exiting gracefully ...`), true);
+  cleanupStage(fileName, { sshHost });
+  shell.exit(1);
+}
+
+/**
+ * @description Clean up stage. Cleans up artefacts left by the command.
+ * @param {string} fileName - The name of the files to be cleaned up.
+ * @param {Object} { sshHost } - Information from the config file.
+ */
 function cleanupStage(fileName, { sshHost }) {
-  shell.echo("Starting clean-up ...");
-  fs.unlinkSync(`${fileName}.tar`);
-  fs.unlinkSync(`${fileName}.tar.gz`);
-  if (shell.exec(`ssh ${sshHost} "rm ${fileName}.tar.gz"`).code === 0) {
-    shell.echo(success("Cleanup completed."));
-  } else {
-    shell.echo(err(`Failed to remove ${fileName}.tar.gz from remote host.`));
+  log("Starting clean-up ...");
+
+  log(`Removing ${info(`${fileName}.tar`)} from local host ...`);
+  try {
+    fs.unlinkSync(`${fileName}.tar`);
+  } catch (e) {
+    log(err(`Failed to remove ${fileName}.tar from local storage.`));
   }
+
+  log(`Removing ${info(`${fileName}.tar.gz`)} from local host ...`);
+  try {
+    fs.unlinkSync(`${fileName}.tar.gz`);
+  } catch (e) {
+    log(err(`Failed to remove ${fileName}.tar.gz from local storage.`));
+  }
+
+  log(`Removing ${info(`${fileName}.tar.gz`)} from remote host ...`);
+  if (shell.exec(`ssh ${sshHost} "rm ${fileName}.tar.gz"`, { silent: true }).code !== 0) {
+    log(err(`Failed to remove ${fileName}.tar.gz from remote host.`));
+  }
+
   shell.env.DOCKER_HOST = "";
-  shell.echo(success("Clean-up completed."));
+  log(success("Clean-up completed."));
 }
 
-async function deploy(key, config) {
+let QUIET_FLAG = false;
+let SERVICE_KEY = "";
+
+/**
+ * @description Logs passed text, suppressed by global silent flag. Can be overwridden by shout option.
+ * @param {string} text - Text to be logged.
+ * @param {boolean} shout - Override global silent flag.
+ */
+function log(text, shout = false) {
+  if (!QUIET_FLAG || shout) {
+    shell.echo(text);
+  }
+}
+
+/**
+ * @description Executes deploy sequence.
+ * @param {string} key - The name of the files to be cleaned up.
+ * @param {Object} config - JSON containing the information from the config file.
+ * @param {boolean} quiet - Flag indicating whether the process should suppress verbose output.
+ */
+async function deploy(key, config, quiet) {
+  QUIET_FLAG = quiet;
+  SERVICE_KEY = key;
   const fileName = generateFileName(key);
   displayInfo(config);
   buildingStage(config);
@@ -110,10 +181,3 @@ async function deploy(key, config) {
 }
 
 module.exports = { deploy };
-
-//Notes:
-// Async shell - potentially useful to deploy multiple images
-// var child = exec('some_long_running_process', {async:true});
-// child.stdout.on('data', function(data) {
-//   /* ... do something with data ... */
-// });
