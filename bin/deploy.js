@@ -103,13 +103,38 @@ async function copyingStage(fileName, { sshHost }) {
  * @param {string} fileName - The name of the file containing the image to be loaded.
  * @param {Object} { sshHost } - Information from the config file.
  */
-function loadingStage(fileName, { sshHost }) {
+async function loadingStage(fileName, { sshHost }) {
   log(`Loading the image...`);
 
   shell.env.DOCKER_HOST = `ssh://${sshHost}`;
-  const loadResult = shell.exec(`docker load -i ${fileName}.tar.gz`, { silent: QUIET_FLAG });
-  if (loadResult.code !== 0) {
-    log(err(loadResult.stderr));
+
+  // const loadResult = shell.exec(`docker load -i ${fileName}.tar.gz`, { silent: QUIET_FLAG });
+  // if (loadResult.code !== 0) {
+  //   log(err(loadResult.stderr));
+  //   gracefulExit();
+  // }
+
+  async function awaitLoad() {
+    const copyWorker = require("child_process").spawn(
+      "docker",
+      [`load`, `-i`, `${fileName}.tar.gz`],
+      {
+        env: { ...process.env, DOCKER_HOST: `ssh://${sshHost}` },
+        stdio: QUIET_FLAG ? "ignore" : "inherit",
+      }
+    );
+
+    const exitCode = await new Promise((resolve, reject) => {
+      copyWorker.on("exit", (code) => {
+        resolve(code);
+      });
+    });
+
+    return { exitCode };
+  }
+
+  loadResult = await awaitLoad();
+  if (loadResult.exitCode !== 0) {
     gracefulExit();
   }
 
@@ -125,7 +150,7 @@ function deploymentStage({ serviceName, imageName }) {
   log(`Deploying the image...`);
 
   const deployResult = shell.exec(`docker service update --image ${imageName} ${serviceName}`, {
-    silent: QUIET_FLAG,
+    silent: true,
   });
   if (deployResult.code !== 0) {
     log(err(deployResult.stderr));
@@ -159,7 +184,7 @@ function cleanupStage(fileName, { sshHost }) {
   }
 
   log(`Removing ${info(`${fileName}.tar.gz`)} from remote host ...`);
-  if (shell.exec(`ssh ${sshHost} "rm ${fileName}.tar.gz"`, { silent: true }).code !== 0) {
+  if (shell.exec(`ssh ${sshHost} "rm ${fileName}.tar.gz"`, { silent: QUIET_FLAG }).code !== 0) {
     log(err(`Failed to remove ${fileName}.tar.gz from remote host.`));
   }
 
@@ -212,7 +237,7 @@ async function deploy(key, config, quiet) {
   buildingStage(config);
   await savingStage(fileName, config);
   await copyingStage(fileName, config);
-  loadingStage(fileName, config);
+  await loadingStage(fileName, config);
   deploymentStage(config);
   cleanupStage(fileName, config);
 }
