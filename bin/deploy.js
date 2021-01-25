@@ -26,7 +26,7 @@ function displayInfo({ serviceName, imageName, build, sshHost }) {
  */
 function buildingStage({ build }) {
   log(`Building the image...`);
-  shell.exec(build);
+  shell.exec(build, { silent: QUIET_FLAG });
   log(success(`Building completed.`));
   log("");
 }
@@ -107,7 +107,7 @@ function loadingStage(fileName, { sshHost }) {
   log(`Loading the image...`);
 
   shell.env.DOCKER_HOST = `ssh://${sshHost}`;
-  const loadResult = shell.exec(`docker load -i ${fileName}.tar.gz`, { silent: true });
+  const loadResult = shell.exec(`docker load -i ${fileName}.tar.gz`, { silent: QUIET_FLAG });
   if (loadResult.code !== 0) {
     log(err(loadResult.stderr));
     gracefulExit();
@@ -124,7 +124,9 @@ function loadingStage(fileName, { sshHost }) {
 function deploymentStage({ serviceName, imageName }) {
   log(`Deploying the image...`);
 
-  const deployResult = shell.exec(`docker service update --image ${imageName} ${serviceName}`);
+  const deployResult = shell.exec(`docker service update --image ${imageName} ${serviceName}`, {
+    silent: QUIET_FLAG,
+  });
   if (deployResult.code !== 0) {
     log(err(deployResult.stderr));
     gracefulExit();
