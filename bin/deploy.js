@@ -60,15 +60,40 @@ async function savingStage(fileName, { imageName }) {
  * @param {string} fileName - The name of the file to be copied to the remote host.
  * @param {Object} { sshHost } - Information from the config file.
  */
-function copyingStage(fileName, { sshHost }) {
+async function copyingStage(fileName, { sshHost }) {
   log(`Copying ${info(`${fileName}.tar.gz`)} to ${info(sshHost)} ...`);
-  const copyResult = shell.exec(`scp ./${fileName}.tar.gz ${sshHost}:${fileName}.tar.gz`, {
-    silent: true,
-  });
-  if (copyResult.code !== 0) {
-    log(err(copyResult.stderr));
+
+  //The commented code albeit less complicated, does not stream progress of scp.
+
+  // const copyResult = shell.exec(`scp -p ./${fileName}.tar.gz ${sshHost}:${fileName}.tar.gz`, {
+  //   silent: QUIET_FLAG,
+  // });
+  // if (copyResult.code !== 0) {
+  //   log(err(copyResult.stderr));
+  //   gracefulExit();
+  // }
+
+  async function awaitCopy() {
+    const copyWorker = require("child_process").spawn(
+      "scp",
+      [`./${fileName}.tar.gz`, `${sshHost}:${fileName}.tar.gz`],
+      { stdio: QUIET_FLAG ? "ignore" : "inherit" }
+    );
+
+    const exitCode = await new Promise((resolve, reject) => {
+      copyWorker.on("exit", (code) => {
+        resolve(code);
+      });
+    });
+
+    return { exitCode };
+  }
+
+  copyResult = await awaitCopy();
+  if (copyResult.exitCode !== 0) {
     gracefulExit();
   }
+
   log(success(`Copy successful.`));
   log("");
 }
@@ -105,7 +130,7 @@ function deploymentStage({ serviceName, imageName }) {
     gracefulExit();
   }
 
-  log(success(`Deployment completed.`));
+  log(success(`Deployment completed.`), true);
   log("");
 }
 
@@ -155,7 +180,7 @@ function log(text, shout = false) {
  * @description Cleans up artefacts and exits the process gracefully, to be called in case of error in the procedure.
  */
 function gracefulExit() {
-  log(err(`Failed to deploy ${SERVICE_KEY}. Exiting gracefully ...`), true);
+  log(err(`\nFailed to deploy ${SERVICE_KEY}. Exiting gracefully ...`), true);
   const sshHost = CONFIG_JSON.sshHost;
   cleanupStage(FILE_NAME, { sshHost });
   shell.exit(1);
@@ -184,7 +209,7 @@ async function deploy(key, config, quiet) {
   displayInfo(config);
   buildingStage(config);
   await savingStage(fileName, config);
-  copyingStage(fileName, config);
+  await copyingStage(fileName, config);
   loadingStage(fileName, config);
   deploymentStage(config);
   cleanupStage(fileName, config);
