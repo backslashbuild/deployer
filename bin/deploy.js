@@ -34,16 +34,16 @@ function buildingStage({ build }) {
 /**
  * @description Saving stage. Saves the image into intermediate .tar file, then compresses it using gzip into .tar.gz.
  * @param {string} fileName - The file name given to the .tar and the .tar.gz files.
- * @param {Object} { imageName, sshHost } - Information from the config file.
+ * @param {Object} { imageName } - Information from the config file.
  */
-async function savingStage(fileName, { imageName, sshHost }) {
+async function savingStage(fileName, { imageName }) {
   log(`Saving image to ${info(`${fileName}.tar.gz`)} ...`);
 
   log(`Creating intermediate file ${info(`${fileName}.tar`)} ...`);
   const saveResult = shell.exec(`docker save ${imageName} -o ${fileName}.tar`);
   if (saveResult.code !== 0) {
     log(err(saveResult.stderr));
-    gracefulExit(fileName, { sshHost });
+    gracefulExit();
   }
 
   log(`Creating ${info(`${fileName}.tar.gz`)} ...`);
@@ -67,7 +67,7 @@ function copyingStage(fileName, { sshHost }) {
   });
   if (copyResult.code !== 0) {
     log(err(copyResult.stderr));
-    gracefulExit(fileName, { sshHost });
+    gracefulExit();
   }
   log(success(`Copy successful.`));
   log("");
@@ -85,7 +85,7 @@ function loadingStage(fileName, { sshHost }) {
   const loadResult = shell.exec(`docker load -i ${fileName}.tar.gz`, { silent: true });
   if (loadResult.code !== 0) {
     log(err(loadResult.stderr));
-    gracefulExit(fileName, { sshHost });
+    gracefulExit();
   }
 
   log(success(`Loading completed.`));
@@ -98,22 +98,15 @@ function loadingStage(fileName, { sshHost }) {
  */
 function deploymentStage({ serviceName, imageName }) {
   log(`Deploying the image...`);
-  //TODO
-  // shell.exec(`docker service update --image ${imageName} ${serviceName}`);
+
+  const deployResult = shell.exec(`docker service update --image ${imageName} ${serviceName}`);
+  if (deployResult.code !== 0) {
+    log(err(deployResult.stderr));
+    gracefulExit();
+  }
 
   log(success(`Deployment completed.`));
   log("");
-}
-
-/**
- * @description Cleans up artefacts and exits the process gracefully, to be called in case of error in the main process.
- * @param {string} fileName - The name of the files to be cleaned up.
- * @param {Object} { sshHost } - Information from the config file.
- */
-function gracefulExit(fileName, { sshHost }) {
-  log(err(`Failed to deploy ${SERVICE_KEY}. Exiting gracefully ...`), true);
-  cleanupStage(fileName, { sshHost });
-  shell.exit(1);
 }
 
 /**
@@ -147,13 +140,10 @@ function cleanupStage(fileName, { sshHost }) {
   log(success("Clean-up completed."));
 }
 
-let QUIET_FLAG = false;
-let SERVICE_KEY = "";
-
 /**
  * @description Logs passed text, suppressed by global silent flag. Can be overwridden by shout option.
  * @param {string} text - Text to be logged.
- * @param {boolean} shout - Override global silent flag.
+ * @param {boolean} shout - Optional Parameter. Set to true to override global quiet flag. Defaults to false.
  */
 function log(text, shout = false) {
   if (!QUIET_FLAG || shout) {
@@ -162,15 +152,35 @@ function log(text, shout = false) {
 }
 
 /**
+ * @description Cleans up artefacts and exits the process gracefully, to be called in case of error in the procedure.
+ */
+function gracefulExit() {
+  log(err(`Failed to deploy ${SERVICE_KEY}. Exiting gracefully ...`), true);
+  const sshHost = CONFIG_JSON.sshHost;
+  cleanupStage(FILE_NAME, { sshHost });
+  shell.exit(1);
+}
+
+let QUIET_FLAG = false;
+let SERVICE_KEY = "";
+let CONFIG_JSON = {};
+let FILE_NAME = "";
+
+/**
  * @description Executes deploy sequence.
  * @param {string} key - The name of the files to be cleaned up.
  * @param {Object} config - JSON containing the information from the config file.
  * @param {boolean} quiet - Flag indicating whether the process should suppress verbose output.
  */
 async function deploy(key, config, quiet) {
+  const fileName = generateFileName(key);
+
+  //set global variables
   QUIET_FLAG = quiet;
   SERVICE_KEY = key;
-  const fileName = generateFileName(key);
+  CONFIG_JSON = config;
+  FILE_NAME = fileName;
+
   displayInfo(config);
   buildingStage(config);
   await savingStage(fileName, config);
