@@ -132,7 +132,6 @@ async function loadingStage(fileName, { sshHost }) {
 
     return { exitCode };
   }
-
   loadResult = await awaitLoad();
   if (loadResult.exitCode !== 0) {
     gracefulExit();
@@ -149,9 +148,12 @@ async function loadingStage(fileName, { sshHost }) {
 function deploymentStage({ serviceName, imageName }) {
   log(`Deploying the image...`);
 
-  const deployResult = shell.exec(`docker service update --image ${imageName} ${serviceName}`, {
-    silent: true,
-  });
+  const deployResult = shell.exec(
+    `docker service update --force --image ${imageName} ${serviceName}`,
+    {
+      silent: QUIET_FLAG,
+    }
+  );
   if (deployResult.code !== 0) {
     log(err(deployResult.stderr));
     gracefulExit();
