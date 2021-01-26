@@ -2,7 +2,8 @@
 const yargs = require("yargs");
 const { exit } = require("process");
 const { err, spawnWorker } = require("./utils");
-const { deploy } = require("./deploy");
+const { buildLocallyAndCopy } = require("./buildLocallyAndCopy");
+const { buildOnRemote } = require("./buildOnRemote");
 fs = require("fs");
 
 /**
@@ -82,7 +83,8 @@ function deployOne(configJSON) {
     console.log(err(`Config file does not contain key: "${SERVICE_KEY}".`));
     exit(1);
   }
-  deploy(SERVICE_KEY, configJSON[SERVICE_KEY], QUIET);
+  buildLocallyAndCopy(SERVICE_KEY, configJSON[SERVICE_KEY], QUIET);
+  // buildOnRemote(SERVICE_KEY, configJSON[SERVICE_KEY], QUIET);
 }
 
 /**
@@ -92,7 +94,9 @@ function deployOne(configJSON) {
 function deployAll(configJSON) {
   const workers = [];
   Object.keys(configJSON).forEach(async (k) => {
-    const worker = spawnWorker(`deployer`, [`${k}`, `-f`, `${CONFIG_FILE_PATH}`], QUIET);
+    args = [`${k}`, `-f`, `${CONFIG_FILE_PATH}`];
+    QUIET ? args.push("--quiet") : args;
+    const worker = spawnWorker(`deployer`, args);
     workers.push(worker);
   });
   console.log(`Deploying all images...\n`);

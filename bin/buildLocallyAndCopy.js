@@ -226,7 +226,7 @@ let FILE_NAME = "";
  * @param {Object} config - JSON containing the information from the config file.
  * @param {boolean} quiet - Flag indicating whether the process should suppress verbose output.
  */
-async function deploy(key, config, quiet) {
+async function buildLocallyAndCopy(key, config, quiet) {
   const fileName = generateFileName(key);
 
   //set global variables
@@ -244,4 +244,4 @@ async function deploy(key, config, quiet) {
   cleanupStage(fileName, config);
 }
 
-module.exports = { deploy };
+module.exports = { buildLocallyAndCopy };

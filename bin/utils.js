@@ -32,16 +32,14 @@ function success(text) {
  * @param {boolean} quiet - Flag indicating whether verbose output should be suppressed.
  * @returns {ChildProcess} worker
  */
-function spawnWorker(command, args, quiet) {
+function spawnWorker(command, args) {
   const SERVICE_KEY = args[0];
   //uses spawn from cross-spawn instead of child_process.spawn because it ignores the SHEBANG
   const worker = spawn(command, args);
 
-  if (!quiet) {
-    worker.stdout.on("data", function (data) {
-      console.log(info(`${SERVICE_KEY}: `) + data.toString());
-    });
-  }
+  worker.stdout.on("data", function (data) {
+    console.log(info(`${SERVICE_KEY}: `) + data.toString());
+  });
 
   worker.on("exit", function (code) {
     code === 0
