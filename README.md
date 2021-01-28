@@ -20,7 +20,7 @@ npm install -g https://github.com/backslashbuild/deployer
 
 Deployer must be used in conjuction with a config file stating. By default the script looks for deployer.json at cwd. Alternatively, a path to another file can be specified using the -f option.
 
-## Example deployer.json
+### Example deployer.json
 
 ```json
 {
