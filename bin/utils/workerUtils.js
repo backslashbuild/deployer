@@ -1,29 +1,4 @@
-const colors = require("colors");
 const spawn = require("cross-spawn");
-
-/**
- * @description Colours the text red.
- * @param {string} text - Text to be coloured.
- */
-function err(text) {
-  return colors.red(text);
-}
-
-/**
- * @description Colours the text yellow.
- * @param {string} text - Text to be coloured.
- */
-function info(text) {
-  return colors.yellow(text);
-}
-
-/**
- * @description Colours the text green.
- * @param {string} text - Text to be coloured.
- */
-function success(text) {
-  return colors.green(text);
-}
 
 /**
  * @description Spawns a worker process to execute provided command with arguments.
@@ -34,7 +9,7 @@ function success(text) {
  */
 function spawnWorker(command, args) {
   const SERVICE_KEY = args[0];
-  //uses spawn from cross-spawn instead of child_process.spawn because it ignores the SHEBANG
+  //uses spawn from cross-spawn instead of child_process.spawn because it ignores the SHEBANG and PATHEXT
   const worker = spawn(command, args);
 
   worker.stdout.on("data", function (data) {
@@ -62,4 +37,4 @@ function spawnWorker(command, args) {
   return worker;
 }
 
-module.exports = { err, info, success, spawnWorker };
+module.exports = { spawnWorker };

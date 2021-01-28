@@ -1,6 +1,6 @@
 const shell = require("shelljs");
 const { gzip } = require("node-gzip");
-const { err, success, info } = require("./utils");
+const { err, success, info, log } = require("./utils/logger");
 fs = require("fs");
 const fsPromises = fs.promises;
 
@@ -26,7 +26,7 @@ function displayInfo({ serviceName, imageName, build, sshHost }) {
  */
 function buildingStage({ build }) {
   log(`Building the image...`);
-  shell.exec(build, { silent: QUIET_FLAG });
+  shell.exec(build, { silent: process.env.QUIET_FLAG });
   log(success(`Building completed.`));
   log("");
 }
@@ -66,7 +66,7 @@ async function copyingStage(fileName, { sshHost }) {
   //The commented code albeit less complicated, does not stream progress of scp.
 
   // const copyResult = shell.exec(`scp -p ./${fileName}.tar.gz ${sshHost}:${fileName}.tar.gz`, {
-  //   silent: QUIET_FLAG,
+  //   silent: process.env.QUIET_FLAG,
   // });
   // if (copyResult.code !== 0) {
   //   log(err(copyResult.stderr));
@@ -77,7 +77,7 @@ async function copyingStage(fileName, { sshHost }) {
     const copyWorker = require("child_process").spawn(
       "scp",
       [`./${fileName}.tar.gz`, `${sshHost}:${fileName}.tar.gz`],
-      { stdio: QUIET_FLAG ? "ignore" : "inherit" }
+      { stdio: process.env.QUIET_FLAG ? "ignore" : "inherit" }
     );
 
     const exitCode = await new Promise((resolve, reject) => {
@@ -108,7 +108,7 @@ async function loadingStage(fileName, { sshHost }) {
 
   shell.env.DOCKER_HOST = `ssh://${sshHost}`;
 
-  // const loadResult = shell.exec(`docker load -i ${fileName}.tar.gz`, { silent: QUIET_FLAG });
+  // const loadResult = shell.exec(`docker load -i ${fileName}.tar.gz`, { silent: process.env.QUIET_FLAG });
   // if (loadResult.code !== 0) {
   //   log(err(loadResult.stderr));
   //   gracefulExit();
@@ -120,7 +120,7 @@ async function loadingStage(fileName, { sshHost }) {
       [`load`, `-i`, `${fileName}.tar.gz`],
       {
         env: { ...process.env, DOCKER_HOST: `ssh://${sshHost}` },
-        stdio: QUIET_FLAG ? "ignore" : "inherit",
+        stdio: process.env.QUIET_FLAG ? "ignore" : "inherit",
       }
     );
 
@@ -151,7 +151,7 @@ function deploymentStage({ serviceName, imageName }) {
   const deployResult = shell.exec(
     `docker service update --force --image ${imageName} ${serviceName}`,
     {
-      silent: QUIET_FLAG,
+      silent: process.env.QUIET_FLAG,
     }
   );
   if (deployResult.code !== 0) {
@@ -186,7 +186,10 @@ function cleanupStage(fileName, { sshHost }) {
   }
 
   log(`Removing ${info(`${fileName}.tar.gz`)} from remote host ...`);
-  if (shell.exec(`ssh ${sshHost} "rm ${fileName}.tar.gz"`, { silent: QUIET_FLAG }).code !== 0) {
+  if (
+    shell.exec(`ssh ${sshHost} "rm ${fileName}.tar.gz"`, { silent: process.env.QUIET_FLAG })
+      .code !== 0
+  ) {
     log(err(`Failed to remove ${fileName}.tar.gz from remote host.`));
   }
 
@@ -195,30 +198,17 @@ function cleanupStage(fileName, { sshHost }) {
 }
 
 /**
- * @description Logs passed text, suppressed by global silent flag. Can be overwridden by shout option.
- * @param {string} text - Text to be logged.
- * @param {boolean} shout - Optional Parameter. Set to true to override global quiet flag. Defaults to false.
- */
-function log(text, shout = false) {
-  if (!QUIET_FLAG || shout) {
-    shell.echo(text);
-  }
-}
-
-/**
  * @description Cleans up artefacts and exits the process gracefully, to be called in case of error in the procedure.
  */
 function gracefulExit() {
   log(err(`\nFailed to deploy ${SERVICE_KEY}. Exiting gracefully ...`), true);
-  const sshHost = CONFIG_JSON.sshHost;
-  cleanupStage(FILE_NAME, { sshHost });
+  cleanupStage(FILE_NAME, { SSH_HOST });
   shell.exit(1);
 }
 
-let QUIET_FLAG = false;
 let SERVICE_KEY = "";
-let CONFIG_JSON = {};
 let FILE_NAME = "";
+let SSH_HOST = "";
 
 /**
  * @description Executes deploy sequence.
@@ -226,22 +216,25 @@ let FILE_NAME = "";
  * @param {Object} config - JSON containing the information from the config file.
  * @param {boolean} quiet - Flag indicating whether the process should suppress verbose output.
  */
-async function buildLocallyAndCopy(key, config, quiet) {
+async function buildLocallyAndCopy(key, sshHost, config) {
   const fileName = generateFileName(key);
 
   //set global variables
-  QUIET_FLAG = quiet;
   SERVICE_KEY = key;
-  CONFIG_JSON = config;
   FILE_NAME = fileName;
+  SSH_HOST = sshHost;
 
-  displayInfo(config);
-  buildingStage(config);
-  await savingStage(fileName, config);
-  await copyingStage(fileName, config);
-  await loadingStage(fileName, config);
-  deploymentStage(config);
-  cleanupStage(fileName, config);
+  serviceName = config.serviceName;
+  imageName = config.imageName;
+  build = config.build;
+
+  displayInfo({ serviceName, imageName, build, sshHost });
+  buildingStage({ build });
+  await savingStage(fileName, { imageName });
+  await copyingStage(fileName, { sshHost });
+  await loadingStage(fileName, { sshHost });
+  deploymentStage({ serviceName, imageName });
+  cleanupStage(fileName, { sshHost });
 }
 
 module.exports = { buildLocallyAndCopy };

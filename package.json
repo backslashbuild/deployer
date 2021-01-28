@@ -1,11 +1,11 @@
 {
   "name": "deployer",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Builds specified docker image and deploys to remote host.",
-  "main": "bin/index.js",
+  "main": "bin/command.js",
   "author": "Vasilis Nicolaou",
   "bin": {
-    "deployer": "./bin/index.js"
+    "deployer": "./bin/command.js"
   },
   "dependencies": {
     "colors": "^1.4.0",
