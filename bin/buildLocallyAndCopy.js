@@ -26,7 +26,7 @@ function displayInfo({ serviceName, imageName, build, sshHost }) {
  */
 function buildingStage({ build }) {
   log(`Building the image...`);
-  shell.exec(build, { silent: process.env.QUIET_FLAG });
+  shell.exec(build, { silent: process.env.QUIET_FLAG === "false" ? false : true });
   log(success(`Building completed.`));
   log("");
 }
@@ -77,7 +77,7 @@ async function copyingStage(fileName, { sshHost }) {
     const copyWorker = require("child_process").spawn(
       "scp",
       [`./${fileName}.tar.gz`, `${sshHost}:${fileName}.tar.gz`],
-      { stdio: process.env.QUIET_FLAG ? "ignore" : "inherit" }
+      { stdio: process.env.QUIET_FLAG === "true" ? "ignore" : "inherit" }
     );
 
     const exitCode = await new Promise((resolve, reject) => {
@@ -105,35 +105,11 @@ async function copyingStage(fileName, { sshHost }) {
  */
 async function loadingStage(fileName, { sshHost }) {
   log(`Loading the image...`);
-
-  shell.env.DOCKER_HOST = `ssh://${sshHost}`;
-
-  // const loadResult = shell.exec(`docker load -i ${fileName}.tar.gz`, { silent: process.env.QUIET_FLAG });
-  // if (loadResult.code !== 0) {
-  //   log(err(loadResult.stderr));
-  //   gracefulExit();
-  // }
-
-  async function awaitLoad() {
-    const copyWorker = require("child_process").spawn(
-      "docker",
-      [`load`, `-i`, `${fileName}.tar.gz`],
-      {
-        env: { ...process.env, DOCKER_HOST: `ssh://${sshHost}` },
-        stdio: process.env.QUIET_FLAG ? "ignore" : "inherit",
-      }
-    );
-
-    const exitCode = await new Promise((resolve, reject) => {
-      copyWorker.on("exit", (code) => {
-        resolve(code);
-      });
-    });
-
-    return { exitCode };
-  }
-  loadResult = await awaitLoad();
-  if (loadResult.exitCode !== 0) {
+  const loadResult = shell.exec(`ssh ${sshHost} "docker load -i ${fileName}.tar.gz"`, {
+    silent: process.env.QUIET_FLAG === "true" ? true : false,
+  });
+  if (loadResult.code !== 0) {
+    log(err(loadResult.stderr));
     gracefulExit();
   }
 
@@ -145,13 +121,14 @@ async function loadingStage(fileName, { sshHost }) {
  * @description Deploying stage. Deploys the image to the swarm in the remote host.
  * @param {Object} { serviceName, imageName } - Information from the config file.
  */
-function deploymentStage({ serviceName, imageName }) {
+function deploymentStage({ serviceName, imageName, sshHost }) {
   log(`Deploying the image...`);
 
+  shell.env.DOCKER_HOST = `ssh://${sshHost}`;
   const deployResult = shell.exec(
     `docker service update --force --image ${imageName} ${serviceName}`,
     {
-      silent: process.env.QUIET_FLAG,
+      silent: process.env.QUIET_FLAG === "false" ? false : true,
     }
   );
   if (deployResult.code !== 0) {
@@ -187,8 +164,9 @@ function cleanupStage(fileName, { sshHost }) {
 
   log(`Removing ${info(`${fileName}.tar.gz`)} from remote host ...`);
   if (
-    shell.exec(`ssh ${sshHost} "rm ${fileName}.tar.gz"`, { silent: process.env.QUIET_FLAG })
-      .code !== 0
+    shell.exec(`ssh ${sshHost} "rm ${fileName}.tar.gz"`, {
+      silent: process.env.QUIET_FLAG === "false" ? false : true,
+    }).code !== 0
   ) {
     log(err(`Failed to remove ${fileName}.tar.gz from remote host.`));
   }
@@ -202,7 +180,7 @@ function cleanupStage(fileName, { sshHost }) {
  */
 function gracefulExit() {
   log(err(`\nFailed to deploy ${SERVICE_KEY}. Exiting gracefully ...`), true);
-  cleanupStage(FILE_NAME, { SSH_HOST });
+  cleanupStage(FILE_NAME, { sshHost: SSH_HOST });
   shell.exit(1);
 }
 
@@ -233,7 +211,7 @@ async function buildLocallyAndCopy(key, sshHost, config) {
   await savingStage(fileName, { imageName });
   await copyingStage(fileName, { sshHost });
   await loadingStage(fileName, { sshHost });
-  deploymentStage({ serviceName, imageName });
+  deploymentStage({ serviceName, imageName, sshHost });
   cleanupStage(fileName, { sshHost });
 }
 
