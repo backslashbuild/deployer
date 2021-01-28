@@ -20,7 +20,7 @@ npm install -g https://github.com/backslashbuild/deployer
 
 Deployer must be used in conjuction with a config file stating. By default the script looks for deployer.json at cwd. Alternatively, a path to another file can be specified using the -f option.
 
-### Commands
+## Commands
 
 ```bash
 deployer registry start [-p <port>]
@@ -28,13 +28,15 @@ deployer registry stop
 deployer up <host> <service> [-f <ConfigFilePath>] [--quiet]
 ```
 
-#### deployer registry start [-p <port>]
+---
 
-##### Description
+### deployer registry start [-p <port>]
+
+#### Description
 
 Starts up deployer local registry
 
-##### Options
+#### Options
 
 ```
 --help - Shows help
@@ -42,26 +44,30 @@ Starts up deployer local registry
 -p --port - The port the registry should listen on. Default: 20000
 ```
 
-#### deployer registry stop
+---
 
-##### Description
+### deployer registry stop
+
+#### Description
 
 Stops local registry
 
-##### Options
+#### Options
 
 ```
 --help - Shows help
 --version - Shows version number
 ```
 
-#### deployer up <host> <service> [-f <ConfigFilePath>] [--quiet]
+---
 
-##### Description
+### deployer up <host> <service> [-f <ConfigFilePath>] [--quiet]
+
+#### Description
 
 Replaces the image of a service which is deployed on &lt;host> using the configuration specified in the config file. &lt;service> serves as a key of the config file describing the image.
 
-##### Options
+#### Options
 
 ```
 --help - Shows help
@@ -69,6 +75,8 @@ Replaces the image of a service which is deployed on &lt;host> using the configu
 -f --file - Path to the config file. Default: "deployer.json"
 --quiet - Suppresses verbose output from worker processes
 ```
+
+---
 
 ## Example deployer.json
 
