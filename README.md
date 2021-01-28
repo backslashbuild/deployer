@@ -42,7 +42,7 @@ deployer up <host> <service> [-f <ConfigFilePath>] [--quiet]
 
 ---
 
-### deployer registry start [-p <port>]
+### deployer registry start [-p &lt;port>]
 
 #### Description
 
