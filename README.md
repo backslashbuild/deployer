@@ -73,7 +73,7 @@ Stops local registry
 
 ---
 
-### deployer up <host> <service> [-f <ConfigFilePath>] [--quiet]
+### deployer up &lt;host> &lt;service> [-f &lt;ConfigFilePath>] [--quiet]
 
 #### Description
 
