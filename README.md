@@ -20,6 +20,18 @@ npm install -g https://github.com/backslashbuild/deployer
 
 Deployer must be used in conjuction with a config file stating. By default the script looks for deployer.json at cwd. Alternatively, a path to another file can be specified using the -f option.
 
+## Example deployer.json
+
+```json
+{
+  "hello-world": {
+    "serviceName": "hello-world",
+    "imageName": "tutum/hello-world",
+    "build": "docker pull tutum/hello-world"
+  }
+}
+```
+
 ## Commands
 
 ```bash
@@ -74,18 +86,4 @@ Replaces the image of a service which is deployed on &lt;host> using the configu
 --version - Shows version number
 -f --file - Path to the config file. Default: "deployer.json"
 --quiet - Suppresses verbose output from worker processes
-```
-
----
-
-## Example deployer.json
-
-```json
-{
-  "hello-world": {
-    "serviceName": "hello-world",
-    "imageName": "tutum/hello-world",
-    "build": "docker pull tutum/hello-world"
-  }
-}
 ```
