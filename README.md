@@ -89,11 +89,3 @@ Replaces the image of a service which is deployed on &lt;host> using the configu
   }
 }
 ```
-
-## Test
-
-To run the test configuration:
-
-```bash
-deployer hello-world
-```
