@@ -149,7 +149,7 @@ async function pullAndTagStage(imageName, sshHost, destPort) {
 
   log(`Tagging the image with ${info(`deployer/${imageName}:latest`)} ...`);
   shell.exec(
-    `ssh ${sshHost} "docker image tag localhost:${destPort}/${imageName} deployer/${imageName}:latest"`,
+    `docker -H ssh://${sshHost} image tag localhost:${destPort}/${imageName} deployer/${imageName}:latest`,
     {
       silent: isQuiet(),
     }
@@ -168,7 +168,7 @@ function deployImage(imageName, serviceName, sshHost) {
   log(`Deploying the image...`);
 
   const deployResult = shell.exec(
-    `ssh ${sshHost} docker service update --force --image deployer/${imageName}:latest ${serviceName}`,
+    `docker -H ssh://${sshHost} service update --force --image deployer/${imageName}:latest ${serviceName}`,
     {
       silent: isQuiet(),
     }
