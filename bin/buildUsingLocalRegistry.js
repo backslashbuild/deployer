@@ -184,11 +184,10 @@ function deployImage(imageName, serviceName, sshHost) {
 
 /**
  * @description Executes deploy sequence.
- * @param {string} key - The key of the config file passed as argument.
  * @param {string} sshHost - The remote host to deploy the image to.
  * @param {Object} config - JSON containing the information from the config file.
  */
-async function buildUsingLocalRegistry(key, sshHost, config) {
+async function buildUsingLocalRegistry(sshHost, config) {
   const { serviceName, imageName, build } = config;
   displayInfo(serviceName, imageName, build, sshHost);
   let tunnelProcessRef = null;

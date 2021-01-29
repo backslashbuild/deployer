@@ -40,7 +40,7 @@ exports.handler = function (argv) {
     serviceConfig.imageName = argv.service;
   }
 
-  buildUsingLocalRegistry(argv.service, argv.host, serviceConfig);
+  buildUsingLocalRegistry(argv.host, serviceConfig);
 };
 
 /**
