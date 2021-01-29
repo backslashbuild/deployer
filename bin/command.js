@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-const { wrap } = require("yargs");
 const yargs = require("yargs");
 fs = require("fs");
 

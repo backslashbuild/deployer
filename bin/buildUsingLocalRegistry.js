@@ -1,18 +1,14 @@
 const shell = require("shelljs");
-const { gzip } = require("node-gzip");
-const { err, success, info } = require("./utils");
-fs = require("fs");
-const fsPromises = fs.promises;
-
-function generateFileName(key) {
-  return `deployer-${key}-${Date.now()}`;
-}
+const { err, success, info, log, isQuiet } = require("./utils/logger");
 
 /**
- * @description Prints the information given from the config file.
- * @param {Object} { serviceName, imageName, build, sshHost } - Information from the config file.
+ * @description Prints the information given from command arguments.
+ * @param {string} serviceName - The name of the service on the swarm to be updated.
+ * @param {string} imageName - The name of the image that will be used to update the service.
+ * @param {string} build - The command that will be used to build the image.
+ * @param {string} sshHost - The remote host in which the swarm lives.
  */
-function displayInfo({ serviceName, imageName, build, sshHost }) {
+function displayInfo(serviceName, imageName, build, sshHost) {
   log(`Service name: ${info(serviceName)}`);
   log(`Image name: ${info(imageName)}`);
   log(`Build command: ${info(build)}`);
@@ -21,73 +17,165 @@ function displayInfo({ serviceName, imageName, build, sshHost }) {
 }
 
 /**
- * @description Creates and maintains a tunnel between the local machine and remote ssh host in a child process.
- * @param {Object} { sshHost } - The ssh server at which a reverse tunnel is to be established.
+ * @description Gets the port on which the deployer doker registry is running.
+ * @returns {string} The port on which deployer-registry is exposed at.
  */
-function createTunnel({ sshHost }) {
+function getRegistryPort() {
+  log(`Getting the port of the local docker registry ...`);
+  const result = shell.exec("docker port deployer-registry", { silent: true });
+  if (result.code !== 0) {
+    throw new Error(
+      `${err(`Is the deployer registry running? Try running: `)}${info(`deployer registry start`)}`
+    );
+  }
+  //example stdout: "5000/tcp -> 0.0.0.0:20000"
+  let srcPort = result.stdout.split(":")[1].trim();
+  log(`${success(`Port retrieved successfully.`)} Registry running on port: ${info(srcPort)}`);
+  log("");
+  return srcPort;
+}
+
+/**
+ * @description Creates and maintains a tunnel between the local machine and remote ssh host in a child process.
+ * @param {string} sshHost - The ssh remote user at which a reverse tunnel is to be established.
+ * @param {string} srcPort - The port in which the registry is running on, to be used as the source port for the reverse tunnel.
+ * @returns {Object} {tunnelProcess, destPort} - tunnelProcess is the ChildProcess maintaining the tunnel. destPort is the port allocated by the tunnel for the remote host.
+ */
+async function createTunnel(sshHost, srcPort) {
   log(`Creating reverse tunnel to ${info(sshHost)} ...`);
-  let port = 20000;
-  //ssh -N -R 20001:localhost:20000 roquser@pay2.dev.roqqett.com
+
+  let destPort = "";
   const tunnelProcess = require("child_process").spawn("ssh", [
     `-N`,
     `-R`,
-    `${port}:localhost:${port}`,
+    `0:localhost:${srcPort}`,
     `${sshHost}`,
   ]);
+
   tunnelProcess.on("exit", function (code, signal) {
-    code === 0
-      ? console.log(
-          success(`Tunnel process exited with code ` + code.toString() + `, signal: ${signal}`)
-        )
-      : console.log(
-          err(`Tunnel process exited with code ` + code.toString() + `, signal: ${signal}`)
-        );
+    code
+      ? code === 0
+        ? console.log(success(`Tunnel process exited with code: ${code}.`))
+        : console.log(err(`Tunnel process exited with code: ${code}.`))
+      : console.log(success(`Tunnel process exited successfully.`));
   });
-  log(success(`Reverse tunnel to ${info(sshHost)} established at ${info(`${port}:${port}`)}.`));
-  return { port, tunnelProcess };
+
+  destPort = await new Promise((resolve, reject) => {
+    //example output by the command
+    //Allocated port 40661 for remote forward to localhost:20000
+    tunnelProcess.stdout.on("data", function (data) {
+      resolve(data.toString().split(" ")[2]);
+    });
+    //in fact by default the message is on stderr for some reason. Leaving stdout as well just in case that changes some day.
+    tunnelProcess.stderr.on("data", function (data) {
+      resolve(data.toString().split(" ")[2]);
+    });
+  });
+
+  log(
+    success(`Reverse tunnel to ${info(sshHost)} established at ${info(`${srcPort}:${destPort}`)}.`)
+  );
+  log("");
+  return { tunnelProcess, destPort };
 }
 
 /**
  * @description Building stage. Builds the docker image using the build command provided in the config file.
- * @param {Object} { build } - Information from the config file.
+ * @param {string} build - The command used to build the docker image to be deployed.
  */
-function buildAndPushStage({ build, imageName, port }) {
-  log(`Building the image...`);
-  shell.exec(build, { silent: QUIET_FLAG });
-  shell.exec(`docker image tag ${imageName} localhost:${port}/${imageName}`, {
-    silent: QUIET_FLAG,
-  });
-  log(success(`Building completed.`));
+function buildStage(build) {
+  log(`Building the image ...`);
 
-  log(`Pushing ${imageName} to the local registry...`);
-  shell.exec(`docker image push localhost:${port}/${imageName}`, {
-    silent: QUIET_FLAG,
+  const buildResult = shell.exec(build, { silent: isQuiet() });
+  if (buildResult.code !== 0) {
+    log(err(buildResult.stderr));
+    throw new Error("Failed to build the image using the command provided in the config.");
+  }
+
+  log(success(`Building completed.`));
+  log("");
+}
+
+/**
+ * @description Tags the image built with the deployer registry host and pushes the image to it.
+ * @param {string} imageName
+ * @param {string} srcPort
+ */
+function tagAndPushStage(imageName, srcPort) {
+  log(`Tagging image ${info(imageName)} with tag ${info(`localhost:${srcPort}/${imageName}`)} ...`);
+
+  shell.exec(`docker image tag ${imageName} localhost:${srcPort}/${imageName}`, {
+    silent: isQuiet(),
   });
+
+  log(success(`Tag successful.`));
+  log("");
+
+  log(`Pushing ${imageName} to the local registry ...`);
+
+  shell.exec(`docker image push localhost:${srcPort}/${imageName}`, {
+    silent: isQuiet(),
+  });
+
   log(success(`Pushing completed.`));
   log("");
 }
 
 /**
  * @description Deploying stage. Deploys the image to the swarm in the remote host.
- * @param {Object} { serviceName, imageName } - Information from the config file.
+ * @param {string} imageName - The name of the image to be pulled.
+ * @param {string} sshHost - The remote host which will pull the image.
+ * @param {string} destPort - The port on the remote machine that is tunnelled to the local registry.
  */
-function pullAndDeployStage({ serviceName, imageName }) {
-  log(`Pulling ${info(imageName)} from localhost:${port} ...`);
-  shell.exec(`docker pull localhost:${port}/${imageName}`, {
-    silent: QUIET_FLAG,
-  });
-  log(success(`Pull completed`));
+async function pullAndTagStage(imageName, sshHost, destPort) {
+  log(`Pulling ${info(imageName)} from ${info(`localhost:${destPort}`)} at ${info(sshHost)} ...`);
 
-  log(`Deploying the image...`);
-  const deployResult = shell.exec(
-    `docker service update --force --image localhost:${port}/${imageName} ${serviceName}`,
+  const pullWorker = require("child_process").spawn(
+    `docker`,
+    [`-H`, `ssh://${sshHost}`, `pull`, `localhost:${destPort}/${imageName}`],
+    { stdio: isQuiet() ? "ignore" : "inherit" }
+  );
+  const exitCode = await new Promise((resolve, reject) => {
+    pullWorker.on("exit", (code) => {
+      resolve(code);
+    });
+  });
+
+  if (exitCode !== 0) {
+    throw new Error(err(`Failed to pull image at remote host.`));
+  }
+  log(success(`Pull completed.`));
+  log("");
+
+  log(`Tagging the image with ${info(`deployer/${imageName}:latest`)} ...`);
+  shell.exec(
+    `ssh ${sshHost} "docker image tag localhost:${destPort}/${imageName} deployer/${imageName}:latest"`,
     {
-      silent: QUIET_FLAG,
+      silent: isQuiet(),
+    }
+  );
+  log(success(`Tag completed.`));
+  log("");
+}
+
+/**
+ * @description Updates the image of the service on the remote on the swarm.
+ * @param {string} imageName
+ * @param {string} serviceName
+ * @param {string} sshHost
+ */
+function deployImage(imageName, serviceName, sshHost) {
+  log(`Deploying the image...`);
+
+  const deployResult = shell.exec(
+    `ssh ${sshHost} docker service update --force --image deployer/${imageName}:latest ${serviceName}`,
+    {
+      silent: isQuiet(),
     }
   );
   if (deployResult.code !== 0) {
     log(err(deployResult.stderr));
-    gracefulExit();
+    throw new Error(err(`Failed to deploy image in the remote swarm.`));
   }
 
   log(success(`Deployment completed.`), true);
@@ -95,94 +183,30 @@ function pullAndDeployStage({ serviceName, imageName }) {
 }
 
 /**
- * @description Clean up stage. Cleans up artefacts left by the command.
- * @param {string} fileName - The name of the files to be cleaned up.
- * @param {Object} { sshHost } - Information from the config file.
- */
-function cleanupStage(fileName, { sshHost }) {
-  log("Starting clean-up ...");
-
-  log(`Removing ${info(`${fileName}.tar`)} from local host ...`);
-  try {
-    fs.unlinkSync(`${fileName}.tar`);
-  } catch (e) {
-    log(err(`Failed to remove ${fileName}.tar from local storage.`));
-  }
-
-  log(`Removing ${info(`${fileName}.tar.gz`)} from local host ...`);
-  try {
-    fs.unlinkSync(`${fileName}.tar.gz`);
-  } catch (e) {
-    log(err(`Failed to remove ${fileName}.tar.gz from local storage.`));
-  }
-
-  log(`Removing ${info(`${fileName}.tar.gz`)} from remote host ...`);
-  if (shell.exec(`ssh ${sshHost} "rm ${fileName}.tar.gz"`, { silent: QUIET_FLAG }).code !== 0) {
-    log(err(`Failed to remove ${fileName}.tar.gz from remote host.`));
-  }
-
-  shell.env.DOCKER_HOST = "";
-  log(success("Clean-up completed."));
-}
-
-/**
- * @description Logs passed text, suppressed by global silent flag. Can be overwridden by shout option.
- * @param {string} text - Text to be logged.
- * @param {boolean} shout - Optional Parameter. Set to true to override global quiet flag. Defaults to false.
- */
-function log(text, shout = false) {
-  if (!QUIET_FLAG || shout) {
-    shell.echo(text);
-  }
-}
-
-/**
- * @description Cleans up artefacts and exits the process gracefully, to be called in case of error in the procedure.
- */
-function gracefulExit() {
-  log(err(`\nFailed to deploy ${SERVICE_KEY}. Exiting gracefully ...`), true);
-  const sshHost = CONFIG_JSON.sshHost;
-  cleanupStage(FILE_NAME, { sshHost });
-  shell.exit(1);
-}
-
-let QUIET_FLAG = false;
-let SERVICE_KEY = "";
-let CONFIG_JSON = {};
-let FILE_NAME = "";
-
-/**
  * @description Executes deploy sequence.
- * @param {string} key - The name of the files to be cleaned up.
+ * @param {string} key - The key of the config file passed as argument.
+ * @param {string} sshHost - The remote host to deploy the image to.
  * @param {Object} config - JSON containing the information from the config file.
- * @param {boolean} quiet - Flag indicating whether the process should suppress verbose output.
  */
-async function buildLocallyAndCopy(key, config, quiet) {
-  const fileName = generateFileName(key);
-
-  //set global variables
-  QUIET_FLAG = quiet;
-  SERVICE_KEY = key;
-  CONFIG_JSON = config;
-  FILE_NAME = fileName;
-
-  // docker run -d -p 20000:5000 --name local-registry registry:2
-  // docker image tag admin-ui localhost:20000/admin-ui
-  // docker image push localhost:20000/admin-ui
-  // ssh -R 20000:localhost:20000 roquser@pay2.dev.roqqett.com
-  // docker pull localhost:20000/admin-ui //this is in remote host because of previous SSH
-  // docker service update --force --image localhost:20000/admin-ui s_admin-ui //this is in remote host because of previous SSH
-  // exit //close ssh session
-  // docker container stop local-registry
-  // docker container rm -v registry
-
-  displayInfo(config);
-
-  let { port, tunnelProcess } = createTunnel(config);
-  runRegistry(port);
-  buildAndPushStage({ build, imageName, port });
-  pullAndDeployStage(config);
-  cleanupStage(tunnelProcess, config);
+async function buildUsingLocalRegistry(key, sshHost, config) {
+  const { serviceName, imageName, build } = config;
+  displayInfo(serviceName, imageName, build, sshHost);
+  let tunnelProcessRef = null;
+  try {
+    const srcPort = getRegistryPort();
+    const { tunnelProcess, destPort } = await createTunnel(sshHost, srcPort);
+    tunnelProcessRef = tunnelProcess;
+    buildStage(build);
+    tagAndPushStage(imageName, srcPort);
+    await pullAndTagStage(imageName, sshHost, destPort);
+    deployImage(imageName, serviceName, sshHost);
+  } catch (error) {
+    log(error, true);
+  } finally {
+    if (tunnelProcessRef != null) {
+      tunnelProcessRef.kill();
+    }
+  }
 }
 
-module.exports = { buildLocallyAndCopy };
+module.exports = { buildUsingLocalRegistry };

@@ -10,6 +10,5 @@ exports.builder = (yargs) => {
   });
 };
 exports.handler = function (argv) {
-  console.log(argv);
   runRegistry(argv.port);
 };

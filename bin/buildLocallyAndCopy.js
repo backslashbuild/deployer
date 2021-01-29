@@ -1,6 +1,11 @@
+/*
+
+LEGACY
+
+*/
 const shell = require("shelljs");
 const { gzip } = require("node-gzip");
-const { err, success, info, log } = require("./utils/logger");
+const { err, success, info, log, isQuiet } = require("./utils/logger");
 fs = require("fs");
 const fsPromises = fs.promises;
 
@@ -26,7 +31,7 @@ function displayInfo({ serviceName, imageName, build, sshHost }) {
  */
 function buildingStage({ build }) {
   log(`Building the image...`);
-  shell.exec(build, { silent: process.env.QUIET_FLAG === "false" ? false : true });
+  shell.exec(build, { silent: isQuiet() });
   log(success(`Building completed.`));
   log("");
 }
@@ -77,7 +82,7 @@ async function copyingStage(fileName, { sshHost }) {
     const copyWorker = require("child_process").spawn(
       "scp",
       [`./${fileName}.tar.gz`, `${sshHost}:${fileName}.tar.gz`],
-      { stdio: process.env.QUIET_FLAG === "true" ? "ignore" : "inherit" }
+      { stdio: isQuiet() ? "ignore" : "inherit" }
     );
 
     const exitCode = await new Promise((resolve, reject) => {
@@ -106,7 +111,7 @@ async function copyingStage(fileName, { sshHost }) {
 async function loadingStage(fileName, { sshHost }) {
   log(`Loading the image...`);
   const loadResult = shell.exec(`ssh ${sshHost} "docker load -i ${fileName}.tar.gz"`, {
-    silent: process.env.QUIET_FLAG === "true" ? true : false,
+    silent: isQuiet(),
   });
   if (loadResult.code !== 0) {
     log(err(loadResult.stderr));
@@ -128,7 +133,7 @@ function deploymentStage({ serviceName, imageName, sshHost }) {
   const deployResult = shell.exec(
     `docker service update --force --image ${imageName} ${serviceName}`,
     {
-      silent: process.env.QUIET_FLAG === "false" ? false : true,
+      silent: isQuiet(),
     }
   );
   if (deployResult.code !== 0) {
@@ -165,7 +170,7 @@ function cleanupStage(fileName, { sshHost }) {
   log(`Removing ${info(`${fileName}.tar.gz`)} from remote host ...`);
   if (
     shell.exec(`ssh ${sshHost} "rm ${fileName}.tar.gz"`, {
-      silent: process.env.QUIET_FLAG === "false" ? false : true,
+      silent: isQuiet(),
     }).code !== 0
   ) {
     log(err(`Failed to remove ${fileName}.tar.gz from remote host.`));
@@ -191,8 +196,8 @@ let SSH_HOST = "";
 /**
  * @description Executes deploy sequence.
  * @param {string} key - The name of the files to be cleaned up.
+ * @param {string} sshHost - The remote host to deploy the image to.
  * @param {Object} config - JSON containing the information from the config file.
- * @param {boolean} quiet - Flag indicating whether the process should suppress verbose output.
  */
 async function buildLocallyAndCopy(key, sshHost, config) {
   const fileName = generateFileName(key);

@@ -1,4 +1,4 @@
-const { buildLocallyAndCopy } = require("../buildLocallyAndCopy");
+const { buildUsingLocalRegistry } = require("../buildUsingLocalRegistry");
 const { log, err } = require("../utils/logger");
 
 exports.command = "up <host> <service>";
@@ -32,7 +32,7 @@ exports.handler = function (argv) {
     log(err(`Config file does not contain key: "${argv.service}".`), true);
     process.exit(1);
   }
-  buildLocallyAndCopy(argv.service, argv.host, configJSON[argv.service]);
+  buildUsingLocalRegistry(argv.service, argv.host, configJSON[argv.service]);
 };
 
 /**
@@ -43,7 +43,6 @@ exports.handler = function (argv) {
 function validateConfig(configFilePath) {
   try {
     const json = JSON.parse(fs.readFileSync(configFilePath, "utf8"));
-    log(json);
     Object.keys(json).forEach((k) => {
       if (k === "all") {
         log(

@@ -8,7 +8,9 @@ const shell = require("shelljs");
  */
 function runRegistry(port) {
   console.log("Creating local registry ...");
-  const result = shell.exec(`docker run -d -p ${port}:5000 --name deployer-registry registry:2`);
+  const result = shell.exec(
+    `docker run -d -p ${port}:5000 --restart=always --name deployer-registry registry:2`
+  );
   if (result.code !== 0) {
     console.error(err("Failed to run local registry."));
     exit(1);
