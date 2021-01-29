@@ -22,12 +22,20 @@ Deployer must be used in conjuction with a config file stating. By default the s
 
 ### Example deployer.json
 
+- **"serviceName"**: The name of the service as it appears on the swarm.
+- **"build"**: The command used to build the image.
+- **"imageName"**: The name of the image used to update the remote service. This key is optional. If omitted it defaults to the value of the key. In the example below, for "test" key, "imageName" will take the value "test".
+
 ```json
 {
   "hello-world": {
-    "serviceName": "hello-world",
+    "serviceName": "stack_hello-world",
     "imageName": "tutum/hello-world",
     "build": "docker pull tutum/hello-world"
+  },
+  "test": {
+    "serviceName": "stack1_test",
+    "build": "docker-compose -f some-docker-compose.yml up test"
   }
 }
 ```

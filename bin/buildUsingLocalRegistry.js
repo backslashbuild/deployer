@@ -189,6 +189,9 @@ function deployImage(imageName, serviceName, sshHost) {
  * @param {Object} config - JSON containing the information from the config file.
  */
 async function buildUsingLocalRegistry(key, sshHost, config) {
+  if (!config.imageName) {
+    config.imageName = key;
+  }
   const { serviceName, imageName, build } = config;
   displayInfo(serviceName, imageName, build, sshHost);
   let tunnelProcessRef = null;

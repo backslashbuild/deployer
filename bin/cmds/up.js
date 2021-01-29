@@ -51,13 +51,8 @@ function validateConfig(configFilePath) {
         );
         process.exit(1);
       }
-      if (!(json[k].serviceName && json[k].imageName && json[k].build)) {
-        log(
-          err(
-            `Config file must contain "serviceName", "imageName" and "build" keys for every key.`
-          ),
-          true
-        );
+      if (!(json[k].serviceName && json[k].build)) {
+        log(err(`Config file must contain "serviceName" and "build" keys for every key.`), true);
         process.exit(1);
       }
     });
