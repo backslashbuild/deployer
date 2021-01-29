@@ -28,11 +28,19 @@ exports.builder = (yargs) => {
 exports.handler = function (argv) {
   process.env.QUIET_FLAG = argv.quiet ? true : false;
   const configJSON = validateConfig(argv.file);
+
   if (!configJSON[argv.service]) {
     log(err(`Config file does not contain key: "${argv.service}".`), true);
     process.exit(1);
   }
-  buildUsingLocalRegistry(argv.service, argv.host, configJSON[argv.service]);
+
+  //If imageName is not defined in the config use the service key as imageName
+  let serviceConfig = configJSON[argv.service];
+  if (!serviceConfig.imageName) {
+    serviceConfig.imageName = argv.service;
+  }
+
+  buildUsingLocalRegistry(argv.service, argv.host, serviceConfig);
 };
 
 /**
