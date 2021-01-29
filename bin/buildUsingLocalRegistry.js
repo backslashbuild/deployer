@@ -164,16 +164,30 @@ async function pullAndTagStage(imageName, sshHost, destPort) {
  * @param {string} serviceName
  * @param {string} sshHost
  */
-function deployImage(imageName, serviceName, sshHost) {
+async function deployImage(imageName, serviceName, sshHost) {
   log(`Deploying the image...`);
 
-  const deployResult = shell.exec(
-    `docker -H ssh://${sshHost} service update --force --image deployer/${imageName}:latest ${serviceName}`,
-    {
-      silent: isQuiet(),
-    }
+  const deployWorker = require("child_process").spawn(
+    `docker`,
+    [
+      `-H`,
+      `ssh://${sshHost}`,
+      `service`,
+      `update`,
+      `--force`,
+      `--image`,
+      `deployer/${imageName}:latest`,
+      `${serviceName}`,
+    ],
+    { stdio: isQuiet() ? "ignore" : "inherit" }
   );
-  if (deployResult.code !== 0) {
+  const exitCode = await new Promise((resolve, reject) => {
+    deployWorker.on("exit", (code) => {
+      resolve(code);
+    });
+  });
+
+  if (exitCode !== 0) {
     log(err(deployResult.stderr));
     throw new Error(err(`Failed to deploy image in the remote swarm.`));
   }
@@ -198,7 +212,7 @@ async function buildUsingLocalRegistry(sshHost, config) {
     buildStage(build);
     tagAndPushStage(imageName, srcPort);
     await pullAndTagStage(imageName, sshHost, destPort);
-    deployImage(imageName, serviceName, sshHost);
+    await deployImage(imageName, serviceName, sshHost);
   } catch (error) {
     log(error, true);
   } finally {
