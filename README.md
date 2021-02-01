@@ -24,7 +24,7 @@ Deployer must be used in conjuction with a config file stating. By default the s
 
 - **"serviceName"**: The name of the service as it appears on the swarm.
 - **"build"**: The command used to build the image.
-- **"imageName"**: The name of the image used to update the remote service. This key is optional. If omitted it defaults to the value of the key. In the example below, for "test" key, "imageName" will take the value "test".
+- **"imageName"**: The name of the image used to update the remote service. This key is optional. If omitted it defaults to the name of the service. In the example below, for "hello-world2" service, "imageName" will take the value "hello-world2".
 
 ```yml
 services:
