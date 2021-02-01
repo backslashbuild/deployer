@@ -1,8 +1,9 @@
 const { buildUsingLocalRegistry } = require("../buildUsingLocalRegistry");
 const { log, err, info } = require("../utils/logger");
 const YAML = require("yamljs");
+const { spawnWorker } = require("../utils/workerUtils");
 
-exports.command = "up <host> <service>";
+exports.command = "up <host> <service> [services..]";
 exports.desc = "Deploys specified service to specified host";
 exports.builder = (yargs) => {
   yargs
@@ -27,21 +28,34 @@ exports.builder = (yargs) => {
     });
 };
 exports.handler = function (argv) {
+  const serviceArray = [].concat(argv.service).concat(argv.services);
   process.env.QUIET_FLAG = argv.quiet ? true : false;
   const configObject = validateConfig(argv.file);
 
-  if (!configObject.services[argv.service]) {
-    log(err(`Config file does not contain service: "${argv.service}".`), true);
-    process.exit(1);
-  }
+  if (serviceArray.length == 1) {
+    if (!configObject.services[argv.service]) {
+      log(err(`Config file does not contain service: "${argv.service}".`), true);
+      process.exit(1);
+    }
 
-  //If imageName is not defined in the config use the service key as imageName
-  let serviceConfig = configObject.services[argv.service];
-  if (!serviceConfig.imageName) {
-    serviceConfig.imageName = argv.service;
-  }
+    //If imageName is not defined in the config use the service key as imageName
+    let serviceConfig = configObject.services[argv.service];
+    if (!serviceConfig.imageName) {
+      serviceConfig.imageName = argv.service;
+    }
 
-  buildUsingLocalRegistry(argv.host, serviceConfig);
+    buildUsingLocalRegistry(argv.host, serviceConfig);
+  } else {
+    //TODO calling deployer as a child means that a new tunnel will be created for each service done in parallel.
+    // Potential improvement is to pull the tunnel here so that a single tunnel is used for all services.
+    const workers = [];
+    serviceArray.forEach((s) => {
+      args = [`up`, `${argv.host}`, `${s}`, `-f`, `${argv.file}`];
+      argv.quiet ? args.push("--quiet") : args;
+      const worker = spawnWorker(`deployer`, args);
+      workers.push(worker);
+    });
+  }
 };
 
 /**

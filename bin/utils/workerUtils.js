@@ -1,4 +1,5 @@
 const spawn = require("cross-spawn");
+const { err, success, isQuiet } = require("./logger");
 
 /**
  * @description Spawns a worker process to execute provided command with arguments.
@@ -8,13 +9,13 @@ const spawn = require("cross-spawn");
  * @returns {ChildProcess} worker
  */
 function spawnWorker(command, args) {
-  const SERVICE_KEY = args[0];
+  const SERVICE_KEY = args[2];
   //uses spawn from cross-spawn instead of child_process.spawn because it ignores the SHEBANG and PATHEXT
-  const worker = spawn(command, args);
+  const worker = spawn(command, args, { stdio: isQuiet() ? "ignore" : "inherit" });
 
-  worker.stdout.on("data", function (data) {
-    console.log(info(`${SERVICE_KEY}: `) + data.toString());
-  });
+  // worker.stdout.on("data", function (data) {
+  //   console.log(info(`${SERVICE_KEY}: `) + data.toString());
+  // });
 
   worker.on("exit", function (code) {
     code === 0
@@ -27,13 +28,6 @@ function spawnWorker(command, args) {
           err(`Worker process for deployment of ${SERVICE_KEY} exited with code ` + code.toString())
         );
   });
-  //alternative to using spawn, but you get output at the end of execution instead of stream.
-  // const worker = require("child_process").exec(
-  //   `deployer ${k} -f ${CONFIG_FILE_PATH}`,
-  //   (error, stdout, stderr) => {
-  //     console.log(stdout);
-  //   }
-  // );
   return worker;
 }
 

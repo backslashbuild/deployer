@@ -44,7 +44,7 @@ services:
 ```bash
 deployer registry start [-p <port>]
 deployer registry stop
-deployer up <host> <service> [-f <ConfigFilePath>] [--quiet]
+deployer up <host> <service> [services..] [-f <ConfigFilePath>] [--quiet]
 ```
 
 ---
@@ -80,17 +80,17 @@ Stops local registry
 
 ---
 
-### deployer up &lt;host> &lt;service> [-f &lt;ConfigFilePath>] [--quiet]
+### deployer up &lt;host> &lt;service> [services..] [-f &lt;ConfigFilePath>] [--quiet]
 
 #### Description
 
-Replaces the image of a service which is deployed on &lt;host> using the configuration specified in the config file. &lt;service> serves as a key of the config file describing the image.
+Replaces the image of a service which is deployed on &lt;host> using the configuration specified in the config file. &lt;service> serves as a key of the config file describing the image. More than one services can be passed as arguments to the function and they will be deployed in parallel.
 
 #### Options
 
 ```
 --help - Shows help
 --version - Shows version number
--f --file - Path to the config file. Default: "deployer.json"
+-f --file - Path to the config file. Default: "deployer.yml"
 --quiet - Suppresses verbose output from worker processes
 ```
