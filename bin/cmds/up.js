@@ -22,7 +22,7 @@ exports.builder = (yargs) => {
         fs.accessSync(argv.f, fs.R_OK);
         return true;
       } catch (e) {
-        throw new Error(err(`Argument check failed: ${arg.f} is not a readable file.`));
+        throw new Error(err(`Argument check failed: ${argv.f} is not a readable file.`));
       }
     });
 };
