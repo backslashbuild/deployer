@@ -5,7 +5,6 @@ const { err, success, isQuiet } = require("./logger");
  * @description Spawns a worker process to execute provided command with arguments.
  * @param {string} command - The command to be executed by the spawned child.
  * @param {Array} args - An array of strings as the arguments for the command.
- * @param {boolean} quiet - Flag indicating whether verbose output should be suppressed.
  * @returns {ChildProcess} worker
  */
 function spawnWorker(command, args) {
