@@ -18,26 +18,25 @@ npm install -g https://github.com/backslashbuild/deployer
 
 ## Usage
 
-Deployer must be used in conjuction with a config file stating. By default the script looks for deployer.json at cwd. Alternatively, a path to another file can be specified using the -f option.
+Deployer must be used in conjuction with a config file stating. By default the script looks for deployer.yml at cwd. Alternatively, a path to another yml file can be specified using the -f option.
 
-### Example deployer.json
+### Example deployer.yml
 
 - **"serviceName"**: The name of the service as it appears on the swarm.
 - **"build"**: The command used to build the image.
 - **"imageName"**: The name of the image used to update the remote service. This key is optional. If omitted it defaults to the value of the key. In the example below, for "test" key, "imageName" will take the value "test".
 
-```json
-{
-  "hello-world": {
-    "serviceName": "stack_hello-world",
-    "imageName": "tutum/hello-world",
-    "build": "docker pull tutum/hello-world"
-  },
-  "test": {
-    "serviceName": "stack1_test",
-    "build": "docker-compose -f some-docker-compose.yml up test"
-  }
-}
+```yml
+services:
+  hello-world1:
+    serviceName: stack_hello-world1
+    imageName: tutum/hello-world
+    build: docker pull tutum/hello-world --quiet
+
+  hello-world2:
+    serviceName: stack_hello-world2
+    #imageName: hello-world2        ---       imageName defaults to the key but can be overwritten
+    build: docker pull tutum/hello-world --quiet
 ```
 
 ## Commands
