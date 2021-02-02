@@ -52,7 +52,7 @@ exports.handler = function (argv) {
     serviceArray.forEach((s) => {
       args = [`up`, `${argv.host}`, `${s}`, `-f`, `${argv.file}`];
       argv.quiet ? args.push("--quiet") : args;
-      const worker = spawnWorker(`deployer`, args);
+      const worker = spawnWorker(`deployer`, args, s);
       workers.push(worker);
     });
   }
