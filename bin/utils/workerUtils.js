@@ -1,5 +1,5 @@
 const spawn = require("cross-spawn");
-const { err, success, isQuiet } = require("./logger");
+const { err, success, isQuiet, log } = require("./logger");
 
 /**
  * @description Spawns a worker process to execute provided command with arguments.
