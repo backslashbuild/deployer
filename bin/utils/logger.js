@@ -35,7 +35,7 @@ function isQuiet() {
 /**
  * @description Logs passed text, suppressed by global silent flag. Can be overwridden by shout option.
  * @param {string} text - Text to be logged.
- * @param {boolean} shout - Optional Parameter. Set to true to override global quiet flag. Defaults to false.
+ * @param {boolean} [shout = false] - Optional Parameter. Set to true to override global quiet flag. Defaults to false.
  */
 function log(text, shout = false) {
   if (!isQuiet() || shout) {

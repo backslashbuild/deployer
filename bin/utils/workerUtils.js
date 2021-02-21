@@ -10,7 +10,7 @@ const { err, success, isQuiet, log } = require("./logger");
  */
 function spawnWorker(command, args, name = "Cross-Spawn ChildProcess") {
   //uses spawn from cross-spawn instead of child_process.spawn because it ignores the SHEBANG and PATHEXT
-  const worker = spawn(command, args, { stdio: isQuiet() ? "ignore" : "inherit" });
+  const worker = spawn(command, args, { stdio: "inherit" });
 
   worker.on("exit", function (code) {
     code === 0
@@ -18,8 +18,10 @@ function spawnWorker(command, args, name = "Cross-Spawn ChildProcess") {
           success(`Worker process for deployment of ${name} exited with code ` + code.toString()),
           true
         )
-      : log(err(`Worker process for deployment of ${name} exited with code ` + code.toString())),
-      true;
+      : log(
+          err(`Worker process for deployment of ${name} exited with code ` + code.toString()),
+          true
+        );
   });
   return worker;
 }

@@ -44,9 +44,10 @@ function getRegistryPort() {
  * @description Creates and maintains a tunnel between the local machine and remote ssh host in a child process.
  * @param {string} sshHost - The ssh remote user at which a reverse tunnel is to be established.
  * @param {string} srcPort - The port in which the registry is running on, to be used as the source port for the reverse tunnel.
+ * @param {string} serviceName - The name of the service that will be updated. Used for logging only.
  * @returns {Promise<Object>} {tunnelProcess, destPort} - tunnelProcess is the ChildProcess maintaining the tunnel. destPort is the port allocated by the tunnel for the remote host.
  */
-async function createTunnel(sshHost, srcPort) {
+async function createTunnel(sshHost, srcPort, serviceName) {
   log(`Creating reverse tunnel to ${info(sshHost)} ...`);
 
   let destPort = "";
@@ -57,13 +58,13 @@ async function createTunnel(sshHost, srcPort) {
     `${sshHost}`,
   ]);
 
-  tunnelProcess.on("exit", function (code, signal) {
-    code
-      ? code === 0
-        ? console.log(success(`Tunnel process exited with code: ${code}.`))
-        : console.log(err(`Tunnel process exited with code: ${code}.`))
-      : console.log(success(`Tunnel process exited successfully.`));
-  });
+  // tunnelProcess.on("exit", function (code, signal) {
+  //   code
+  //     ? code === 0
+  //       ? log(success(`Tunnel process for ${serviceName} exited with code: ${code}.`), true)
+  //       : log(err(`Tunnel process for ${serviceName} exited with code: ${code}.`), true)
+  //     : log(success(`Tunnel process for ${serviceName} exited successfully.`), true);
+  // });
 
   destPort = await new Promise((resolve, reject) => {
     //example output by the command
@@ -270,7 +271,7 @@ async function deployImage(imageName, serviceName, sshHost) {
     throw new Error(err(`Failed to deploy image in the remote swarm.`));
   }
 
-  log(success(`Deployment completed.`), true);
+  log(success(`${serviceName} updated successfully.`), true);
   log("");
 }
 
@@ -285,7 +286,7 @@ async function deploy(sshHost, config) {
   let tunnelProcessRef = null;
   try {
     const srcPort = getRegistryPort();
-    const { tunnelProcess, destPort } = await createTunnel(sshHost, srcPort);
+    const { tunnelProcess, destPort } = await createTunnel(sshHost, srcPort, serviceName);
     tunnelProcessRef = tunnelProcess;
     buildStage(build);
     await tagAndPushStage(imageName, srcPort);
@@ -299,6 +300,7 @@ async function deploy(sshHost, config) {
     await deployImage(taggedImage, serviceName, sshHost);
   } catch (error) {
     log(error, true);
+    process.exitCode = 1;
   } finally {
     if (tunnelProcessRef != null) {
       tunnelProcessRef.kill();
