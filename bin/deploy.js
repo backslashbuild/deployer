@@ -44,7 +44,7 @@ function getRegistryPort() {
  * @description Creates and maintains a tunnel between the local machine and remote ssh host in a child process.
  * @param {string} sshHost - The ssh remote user at which a reverse tunnel is to be established.
  * @param {string} srcPort - The port in which the registry is running on, to be used as the source port for the reverse tunnel.
- * @returns {Object} {tunnelProcess, destPort} - tunnelProcess is the ChildProcess maintaining the tunnel. destPort is the port allocated by the tunnel for the remote host.
+ * @returns {Promise<Object>} {tunnelProcess, destPort} - tunnelProcess is the ChildProcess maintaining the tunnel. destPort is the port allocated by the tunnel for the remote host.
  */
 async function createTunnel(sshHost, srcPort) {
   log(`Creating reverse tunnel to ${info(sshHost)} ...`);
@@ -168,7 +168,7 @@ async function pullAndTagStage(imageName, sshHost, destPort) {
  * @description Helper function for getting a random number in range (both min and max included)
  * @param {number} min - integer, inclusive
  * @param {number} max - integer, inclusive
- * @return {number} Random number between min and max, both inclusive.
+ * @returns {number} Random number between min and max, both inclusive.
  */
 function getRandomNumber(min, max) {
   return Math.floor(Math.random() * (max - min + 1) + min);
