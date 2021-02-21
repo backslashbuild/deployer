@@ -7,7 +7,7 @@ Version 2 enables the functionality in a multi-node environment. This id one by 
 ## Prerequisites
 
 - [Docker](https://www.docker.com/products/docker-desktop) must be installed on local machine.
-- Established ssh connection between remote host and local machine (knownhosts).
+- Established ssh connection between remote host and local machine (authorized_keys).
 - An existing docker swarm on remote machine containing the services whose image deployer should be able to change.
 
 ## Installation
