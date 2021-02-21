@@ -8,7 +8,12 @@ Version 2 enables the functionality in a multi-node environment. This id one by 
 
 - [Docker](https://www.docker.com/products/docker-desktop) must be installed on local machine.
 - Established ssh connection between remote host and local machine (authorized_keys).
-- An existing docker swarm on remote machine containing the services whose image deployer should be able to change.
+
+```bash
+cat ~/.ssh/<YOUR_KEY>.pub | ssh <YOUR_USER>@<YOUR_HOST> "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
+```
+
+- An existing docker swarm on the remote machine that contains the services which deployer will update with new images.
 
 ## Installation
 
