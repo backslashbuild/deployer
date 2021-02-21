@@ -1,4 +1,4 @@
-const { buildUsingLocalRegistry } = require("../buildUsingLocalRegistry");
+const { deploy } = require("../deploy");
 const { log, err, info } = require("../utils/logger");
 const YAML = require("yamljs");
 const { spawnWorker } = require("../utils/workerUtils");
@@ -44,10 +44,10 @@ exports.handler = function (argv) {
       serviceConfig.imageName = argv.service;
     }
 
-    buildUsingLocalRegistry(argv.host, serviceConfig);
+    deploy(argv.host, serviceConfig);
   } else {
-    //TODO calling deployer as a child means that a new tunnel will be created for each service done in parallel.
-    // Potential improvement is to pull the tunnel here so that a single tunnel is used for all services.
+    // Calling deployer as a child means that every service deploy will use its own tunnel.
+    // Potential improvement is to create the tunnel here and pass it as a parameter so that a single tunnel shared by all processes.
     const workers = [];
     serviceArray.forEach((s) => {
       args = [`up`, `${argv.host}`, `${s}`, `-f`, `${argv.file}`];

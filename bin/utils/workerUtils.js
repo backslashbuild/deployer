@@ -2,7 +2,7 @@ const spawn = require("cross-spawn");
 const { err, success, isQuiet, log } = require("./logger");
 
 /**
- * @description Spawns a worker process to execute provided command with arguments.
+ * @description Spawns a cross-spawn worker process to execute provided command with arguments.
  * @param {string} command - The command to be executed by the spawned child.
  * @param {Array} args - An array of strings as the arguments for the command.
  * @param {string} name - Optional string for the name of the process to be used in logs.
@@ -24,4 +24,22 @@ function spawnWorker(command, args, name = "Cross-Spawn ChildProcess") {
   return worker;
 }
 
-module.exports = { spawnWorker };
+/**
+ * An awaitable wrapper around "child_process".spawn(command,args). Obeys by the global --quiet flag.
+ * @param {string} command - The command to be executed by the spawned child.
+ * @param {Array} args - An array of strings as the arguments for the command.
+ * @returns {Promise<string>} The exit code of the process.
+ */
+async function awaitableSpawnProcess(command, args) {
+  const worker = require("child_process").spawn(command, args, {
+    stdio: isQuiet() ? "ignore" : "inherit",
+  });
+  const exitCode = await new Promise((resolve, reject) => {
+    worker.on("exit", (code) => {
+      resolve(code);
+    });
+  });
+  return exitCode;
+}
+
+module.exports = { spawnWorker, awaitableSpawnProcess };

@@ -1,5 +1,4 @@
 const colors = require("colors");
-const shell = require("shelljs");
 
 /**
  * @description Colours the text red.
