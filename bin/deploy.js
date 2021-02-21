@@ -193,7 +193,7 @@ async function handleMultiNodeDeploy(imageName, sshHost) {
     const portsUsed = getAllPortsExposedInSwarm(sshHost);
     while (port === "") {
       let candidate = getRandomNumber(5000, 60000);
-      if (!portsUsed.includes(candidate)) {
+      if (!portsUsed.includes(candidate.toString())) {
         port = candidate;
       }
     }
