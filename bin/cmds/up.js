@@ -61,7 +61,7 @@ exports.handler = function (argv) {
 /**
  * @description Reads file at given path, parses it to a object literal and then validates the keys and structure. Calls exit when YAML structure is invalid or missing keys.
  * @param {string} configFilePath - the file path to the .yml file to be parsed.
- * @return parsed object.
+ * @returns parsed object.
  */
 function validateConfig(configFilePath) {
   try {

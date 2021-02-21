@@ -3,7 +3,7 @@ const { err, success, info } = require("./utils/logger");
 const shell = require("shelljs");
 
 /**
- * Runs a local docker registry
+ * @description Runs a local docker registry
  * @param {string} port - The port the registry should listen at. Should be same as tunnel.
  */
 function runRegistry(port) {
@@ -19,7 +19,7 @@ function runRegistry(port) {
 }
 
 /**
- * Stops the local docker registry
+ * @description Stops the local docker registry
  */
 function stopRegistry() {
   console.log("Stopping local registry ...");
