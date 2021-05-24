@@ -1,4 +1,4 @@
-# Deployer v2.0.0
+# Deployer v2.0.1
 
 Deployer is an npm package dealing with replacing the image of a service in a remote docker swarm using local docker images. This is achieved by running a local docker registry. The local machine builds and pushes the images to that registry and the remote machine pulls and deploys them using an ssh reverse tunnel.
 

@@ -11,7 +11,9 @@ function getContainerPort(containerName) {
     return -1;
   }
   //example stdout: "5000/tcp -> 0.0.0.0:20000"
-  return result.stdout.split(":")[1].trim();
+  const rx = /0.0.0.0:([0-9]+)/g;
+  let arr = rx.exec(result);
+  return arr[1];
 }
 
 /**
