@@ -58,23 +58,17 @@ async function createTunnel(sshHost, srcPort, serviceName) {
     `${sshHost}`,
   ]);
 
-  // tunnelProcess.on("exit", function (code, signal) {
-  //   code
-  //     ? code === 0
-  //       ? log(success(`Tunnel process for ${serviceName} exited with code: ${code}.`), true)
-  //       : log(err(`Tunnel process for ${serviceName} exited with code: ${code}.`), true)
-  //     : log(success(`Tunnel process for ${serviceName} exited successfully.`), true);
-  // });
-
   destPort = await new Promise((resolve, reject) => {
     //example output by the command
     //Allocated port 40661 for remote forward to localhost:20000
     tunnelProcess.stdout.on("data", function (data) {
-      resolve(data.toString().split(" ")[2]);
+      const rx = /Allocated port ([0-9]+)/g;
+      resolve(rx.exec(data.toString())[1]);
     });
     //in fact by default the message is on stderr for some reason. Leaving stdout as well just in case that changes some day.
     tunnelProcess.stderr.on("data", function (data) {
-      resolve(data.toString().split(" ")[2]);
+      const rx = /Allocated port ([0-9]+)/g;
+      resolve(rx.exec(data.toString())[1]);
     });
   });
 
@@ -88,9 +82,15 @@ async function createTunnel(sshHost, srcPort, serviceName) {
 /**
  * @description Building stage. Builds the docker image using the build command provided in the config file.
  * @param {string} build - The command used to build the docker image to be deployed.
+ * @param {string} [targetCWD] - Optional - The target CWD for the build command.
  */
-function buildStage(build) {
+function buildStage(build, targetCWD = undefined) {
   log(`Building the image ...`);
+
+  //configPath is set if deployer.yml is not on cwd
+  if (targetCWD) {
+    shell.pushd("-q", targetCWD);
+  }
 
   const buildResult = shell.exec(build, { silent: isQuiet() });
   if (buildResult.code !== 0) {
@@ -280,7 +280,7 @@ async function deployImage(imageName, serviceName, sshHost) {
  * @param {string} sshHost - The remote host to deploy the image to.
  * @param {Object} config - JSON containing the information from the config file.
  */
-async function deploy(sshHost, config) {
+async function deploy(sshHost, config, targetCWD) {
   const { serviceName, imageName, build } = config;
   displayInfo(serviceName, imageName, build, sshHost);
   let tunnelProcessRef = null;
@@ -288,7 +288,7 @@ async function deploy(sshHost, config) {
     const srcPort = getRegistryPort();
     const { tunnelProcess, destPort } = await createTunnel(sshHost, srcPort, serviceName);
     tunnelProcessRef = tunnelProcess;
-    buildStage(build);
+    buildStage(build, targetCWD);
     await tagAndPushStage(imageName, srcPort);
     await pullAndTagStage(imageName, sshHost, destPort);
 

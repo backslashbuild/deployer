@@ -1,4 +1,6 @@
 deployer.json
 deployer.yml
+docker-compose.yml
+test-compose.yml
 todo.txt
 /node_modules

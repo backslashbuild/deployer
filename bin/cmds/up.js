@@ -2,6 +2,9 @@ const { deploy } = require("../deploy");
 const { log, err, info } = require("../utils/logger");
 const YAML = require("yamljs");
 const { spawnWorker } = require("../utils/workerUtils");
+const { cosmiconfigSync } = require("cosmiconfig");
+
+const explorerSync = cosmiconfigSync("", { searchPlaces: ["deployer.yml"] });
 
 exports.command = "up <host> <service> [services..]";
 exports.desc = "Deploys specified service to specified host";
@@ -23,6 +26,22 @@ exports.builder = (yargs) => {
         fs.accessSync(argv.f, fs.R_OK);
         return true;
       } catch (e) {
+        //if the config file is not found in cwd use comsiconfig to locate deployer.yml
+        //NOTE: in this fallback, the -f flag (if specified), for a custom config file, is ignored and uses the
+        //default "deployer.yml"
+        const result = explorerSync.search();
+        if (result.filepath) {
+          argv.targetCWD = result.filepath.substr(0, result.filepath.lastIndexOf("\\"));
+          //update both aliases of the file path
+          argv.f = result.filepath;
+          argv.file = result.filepath;
+          try {
+            fs.accessSync(argv.f, fs.R_OK);
+            return true;
+          } catch (e2) {
+            throw new Error(err(`Argument check failed: ${argv.f} is not a readable file.`));
+          }
+        }
         throw new Error(err(`Argument check failed: ${argv.f} is not a readable file.`));
       }
     });
@@ -44,7 +63,7 @@ exports.handler = function (argv) {
       serviceConfig.imageName = argv.service;
     }
 
-    deploy(argv.host, serviceConfig);
+    deploy(argv.host, serviceConfig, argv.targetCWD);
   } else {
     // Calling deployer as a child means that every service deploy will use its own tunnel.
     // Potential improvement is to create the tunnel here and pass it as a parameter so that a single tunnel shared by all processes.

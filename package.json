@@ -1,7 +1,8 @@
 {
   "name": "deployer",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Builds specified docker image and deploys to remote host.",
+  "repository": "https://github.com/backslashbuild/deployer",
   "main": "bin/command.js",
   "author": "Vasilis Nicolaou",
   "bin": {
@@ -9,6 +10,7 @@
   },
   "dependencies": {
     "colors": "^1.4.0",
+    "cosmiconfig": "^7.0.0",
     "cross-spawn": "^7.0.3",
     "node-gzip": "^1.1.2",
     "shelljs": "^0.8.4",
