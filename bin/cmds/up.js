@@ -1,4 +1,4 @@
-const { deploy } = require("../deploy");
+const { deploy } = require("../services/deploy");
 const { log, err, info } = require("../utils/logger");
 const YAML = require("yamljs");
 const { spawnWorker } = require("../utils/workerUtils");

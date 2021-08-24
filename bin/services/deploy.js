@@ -4,9 +4,9 @@ const {
   getNumberOfNodes,
   getServicePort,
   getAllPortsExposedInSwarm,
-} = require("./utils/dockerUtils");
-const { err, success, info, log, isQuiet } = require("./utils/logger");
-const { awaitableSpawnProcess } = require("./utils/workerUtils");
+} = require("../utils/dockerUtils");
+const { err, success, info, log, isQuiet } = require("../utils/logger");
+const { awaitableSpawnProcess } = require("../utils/workerUtils");
 
 /**
  * @description Prints the information given from command arguments.

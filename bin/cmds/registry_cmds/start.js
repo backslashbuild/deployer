@@ -1,4 +1,4 @@
-const { runRegistry } = require("../../registry");
+const { runRegistry } = require("../../services/registry");
 
 exports.command = "start";
 exports.desc = "Starts up deployer local docker registry";

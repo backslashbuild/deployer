@@ -1,5 +1,5 @@
 const { exit } = require("yargs");
-const { err, success, info } = require("./utils/logger");
+const { err, success, info } = require("../utils/logger");
 const shell = require("shelljs");
 
 /**
