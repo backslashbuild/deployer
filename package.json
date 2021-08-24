@@ -3,10 +3,10 @@
   "version": "2.0.2",
   "description": "Builds specified docker image and deploys to remote host.",
   "repository": "https://github.com/backslashbuild/deployer",
-  "main": "bin/command.js",
+  "main": "command.js",
   "author": "Vasilis Nicolaou",
   "bin": {
-    "deployer": "./bin/command.js"
+    "deployer": "./command.js"
   },
   "dependencies": {
     "colors": "^1.4.0",

@@ -1,6 +1,7 @@
 const { deploy } = require("../services/deploy");
 const { log, err, info } = require("../utils/logger");
 const YAML = require("yamljs");
+const fs = require("fs");
 const { spawnWorker } = require("../utils/workerUtils");
 const { cosmiconfigSync } = require("cosmiconfig");
 

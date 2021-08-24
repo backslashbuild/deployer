@@ -43,4 +43,10 @@ function log(text, shout = false) {
   }
 }
 
-module.exports = { err, info, success, log, isQuiet };
+const logger = {
+  err,
+  info,
+  success,
+};
+
+module.exports = { err, info, success, log, isQuiet, logger };
