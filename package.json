@@ -12,9 +12,10 @@
     "colors": "^1.4.0",
     "cosmiconfig": "^7.0.0",
     "cross-spawn": "^7.0.3",
+    "node-fetch": "^2.6.1",
     "node-gzip": "^1.1.2",
     "shelljs": "^0.8.4",
     "yamljs": "^0.3.0",
-    "yargs": "^16.2.0"
+    "yargs": "^17.1.1"
   }
 }

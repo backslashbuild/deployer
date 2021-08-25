@@ -43,10 +43,20 @@ function log(text, shout = false) {
   }
 }
 
+function box(text) {
+  const width = text.length + 4;
+  let line = "";
+  for (let i = 0; i < width; i++) {
+    line = line.concat("-");
+  }
+  return `${line}\n| ${text} |\n${line}`;
+}
+
 const logger = {
   err,
   info,
   success,
+  print: log,
 };
 
-module.exports = { err, info, success, log, isQuiet, logger };
+module.exports = { err, info, success, log, isQuiet, logger, box };
