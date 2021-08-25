@@ -18,10 +18,9 @@ exports.builder = (yargs) => {
   });
 };
 exports.handler = function (argv) {
-  const configFileText = fs.readFileSync(argv.configFilePath, "utf8");
-  const configFile = JSON.parse(configFileText);
+  const configFile = argv.deployerConfig;
   configFile[argv.key] = defaultConfig[argv.key];
-  fs.writeFileSync(argv.configFilePath, JSON.stringify(configFile));
+  fs.writeFileSync(argv.deployerConfigFilePath, JSON.stringify(configFile));
   console.log(
     `${logger.success(
       `Config key ${logger.info(argv.key)} has been successfully reverted to default.`

@@ -137,8 +137,9 @@ async function tagAndPushStage(imageName, srcPort) {
  * @param {string} imageName - The name of the image to be pulled.
  * @param {string} sshHost - The remote host which will pull the image.
  * @param {string} destPort - The port on the remote machine that is tunnelled to the local registry.
+ * @param {string} tagName - The name to be used when tagging the image.
  */
-async function pullAndTagStage(imageName, sshHost, destPort) {
+async function pullAndTagStage(imageName, sshHost, destPort, tagName) {
   log(`Pulling ${info(imageName)} from ${info(`localhost:${destPort}`)} at ${info(sshHost)} ...`);
 
   const pullResultCode = await awaitableSpawnProcess(`docker`, [
@@ -154,9 +155,9 @@ async function pullAndTagStage(imageName, sshHost, destPort) {
   log(success(`Pull completed.`));
   log("");
 
-  log(`Tagging the image with ${info(`deployer/${imageName}:latest`)} ...`);
+  log(`Tagging the image with ${info(`${tagName}/${imageName}:latest`)} ...`);
   shell.exec(
-    `docker -H ssh://${sshHost} image tag localhost:${destPort}/${imageName} deployer/${imageName}:latest`,
+    `docker -H ssh://${sshHost} image tag localhost:${destPort}/${imageName} ${tagName}/${imageName}:latest`,
     {
       silent: isQuiet(),
     }
@@ -179,9 +180,10 @@ function getRandomNumber(min, max) {
  * @description Handles deployment of the image in a multi-node swarm.
  * @param {string} imageName - The name of the image to be used when updating the service.
  * @param {string} sshHost - The sshHost of the remote swarm containing the service.
+ * @param {string} tagName - The name to be used when tagging the image.
  * @returns {Promise<string>} The image name after tagging it with the remote deployer-registry.
  */
-async function handleMultiNodeDeploy(imageName, sshHost) {
+async function handleMultiNodeDeploy(imageName, sshHost, tagName) {
   log(`Multi-node swarm detected. Checking for remote deployer-registry ...`);
   const result = shell.exec(`docker -H ssh://${sshHost} service ls`, { silent: true });
   const registryExists = result.stdout.includes(`deployer-registry`);
@@ -226,7 +228,7 @@ async function handleMultiNodeDeploy(imageName, sshHost) {
 
   log(`Tagging image with remote registry ...`);
   shell.exec(
-    `docker -H ssh://${sshHost} image tag deployer/${imageName}:latest 127.0.0.1:${rRegistryPort}/${imageName}:latest`
+    `docker -H ssh://${sshHost} image tag ${tagName}/${imageName}:latest 127.0.0.1:${rRegistryPort}/${imageName}:latest`
   );
 
   log(`Pushing image ${info(imageName)} to remote deployer-registry.`);
@@ -279,9 +281,12 @@ async function deployImage(imageName, serviceName, sshHost) {
  * @description Executes deploy sequence.
  * @param {string} sshHost - The remote host to deploy the image to.
  * @param {Object} config - JSON containing the information from the config file.
+ * @param {string} targetCWD - CWD for build commands.
+ * @param {string} deployerConfig - Deployer configuration values.
  */
-async function deploy(sshHost, config, targetCWD) {
+async function deploy(sshHost, config, targetCWD, deployerConfig) {
   const { serviceName, imageName, build } = config;
+  const { name: tagName } = deployerConfig;
   displayInfo(serviceName, imageName, build, sshHost);
   let tunnelProcessRef = null;
   try {
@@ -290,11 +295,11 @@ async function deploy(sshHost, config, targetCWD) {
     tunnelProcessRef = tunnelProcess;
     buildStage(build, targetCWD);
     await tagAndPushStage(imageName, srcPort);
-    await pullAndTagStage(imageName, sshHost, destPort);
+    await pullAndTagStage(imageName, sshHost, destPort, tagName);
 
-    let taggedImage = `deployer/${imageName}:latest`;
+    let taggedImage = `${tagName}/${imageName}:latest`;
     if (getNumberOfNodes(sshHost) > 1) {
-      taggedImage = await handleMultiNodeDeploy(imageName, sshHost);
+      taggedImage = await handleMultiNodeDeploy(imageName, sshHost, tagName);
     }
 
     await deployImage(taggedImage, serviceName, sshHost);

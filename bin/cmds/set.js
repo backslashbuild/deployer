@@ -17,20 +17,20 @@ exports.builder = (yargs) => {
 
     switch (argv.key) {
       case "name":
-        var validCharset = /^[a-zA-Z0-9-_]+$/;
+        var validCharset = /^[a-zA-Z0-9-]+$/;
         if (!validCharset.test(argv.value)) {
-          throw new Error(logger.err(`Name can only contain alphanumeric characters, "-" and "_"`));
+          throw new Error(logger.err(`Name can only contain alphanumeric characters abd "-"`));
         }
+        argv.value = argv.value.toLowerCase();
         break;
     }
     return true;
   });
 };
 exports.handler = function (argv) {
-  const configFileText = fs.readFileSync(argv.configFilePath, "utf8");
-  const configFile = JSON.parse(configFileText);
+  const configFile = argv.deployerConfig;
   configFile[argv.key] = argv.value;
-  fs.writeFileSync(argv.configFilePath, JSON.stringify(configFile));
+  fs.writeFileSync(argv.deployerConfigFilePath, JSON.stringify(configFile));
   console.log(
     `${logger.success(
       `Config key ${logger.info(argv.key)} has been successfully set to ${logger.info(argv.value)}`

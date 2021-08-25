@@ -65,7 +65,7 @@ exports.handler = function (argv) {
       serviceConfig.imageName = argv.service;
     }
 
-    deploy(argv.host, serviceConfig, argv.targetCWD);
+    deploy(argv.host, serviceConfig, argv.targetCWD, argv.deployerConfig);
   } else {
     // Calling deployer as a child means that every service deploy will use its own tunnel.
     // Potential improvement is to create the tunnel here and pass it as a parameter so that a single tunnel shared by all processes.
