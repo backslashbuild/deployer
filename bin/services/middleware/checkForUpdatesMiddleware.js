@@ -73,11 +73,13 @@ async function checkForUpdatesMiddleware({ installPath }) {
       remoteVersion: remotePackageJson.version,
     })
   ) {
-    console.log("-------------------------------------------------------------------");
+    console.log("-------------------------------------------------------------");
     console.log(
-      `| A new version of deployer was found. Please run ${logger.info("deployer update")} |`
+      `| A new version of deployer was found. Please run:          |\n| ${logger.info(
+        "npm install -g https://github.com/backslashbuild/deployer"
+      )} |\n| to install the update                                     |`
     );
-    console.log("-------------------------------------------------------------------");
+    console.log("-------------------------------------------------------------");
   }
 }
 
