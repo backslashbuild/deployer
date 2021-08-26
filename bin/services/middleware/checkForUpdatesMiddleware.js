@@ -1,6 +1,7 @@
 const fetch = require("node-fetch");
-const { logger } = require("../utils/logger");
 const fs = require("fs");
+const path = require("path");
+const { logger } = require("../../utils/logger");
 
 async function getRemotePackageJson() {
   const requestUrl =
@@ -28,7 +29,8 @@ function isUpdateRequired({ localVersion, remoteVersion }) {
   return false;
 }
 
-async function checkForUpdates(deployerPackageJsonPath) {
+async function checkForUpdatesMiddleware({ installPath }) {
+  const deployerPackageJsonPath = path.resolve(installPath, "package.json");
   try {
     fs.accessSync(deployerPackageJsonPath, fs.R_OK);
   } catch (e) {
@@ -79,4 +81,4 @@ async function checkForUpdates(deployerPackageJsonPath) {
   }
 }
 
-module.exports = { checkForUpdates };
+module.exports = checkForUpdatesMiddleware;
