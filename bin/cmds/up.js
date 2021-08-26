@@ -111,6 +111,7 @@ function validateConfig(configFilePath) {
     }
   } catch (e) {
     log(err("Exception thrown while parsing config file."), true);
+    log(e, true);
     process.exit(1);
   }
 }
