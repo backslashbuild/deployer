@@ -22,6 +22,9 @@ function isUpdateRequired({ localVersion, remoteVersion }) {
   const localVersionParts = localVersion.split(".");
   const remoteVersionParts = remoteVersion.split(".");
   for (let i = 0; i < localVersionParts.length; i++) {
+    if (parseInt(localVersionParts[i]) > parseInt(remoteVersionParts[i])) {
+      return false;
+    }
     if (parseInt(localVersionParts[i]) < parseInt(remoteVersionParts[i])) {
       return true;
     }
