@@ -109,7 +109,7 @@ service - The name of a key from deployer.yaml. Using example deployer.yaml prov
 services - Additional deployer.yaml keys to be deployed in parallel
 ```
 
-### Example command
+#### Example command
 
 `deployer up user@example.com my-hello hello-world1 --quiet`
 
