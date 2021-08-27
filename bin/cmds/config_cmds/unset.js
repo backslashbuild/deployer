@@ -1,6 +1,6 @@
 const { logger } = require("../../utils/logger");
 const fs = require("fs");
-const defaultConfig = require("../../res/defaultConfig");
+const defaultConfig = require("../../res/defaultConfig.json");
 
 exports.command = "unset <key>";
 exports.desc = "Reverts the key to its default value.";

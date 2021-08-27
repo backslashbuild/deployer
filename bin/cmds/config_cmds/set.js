@@ -1,6 +1,6 @@
 const { logger } = require("../../utils/logger");
 const fs = require("fs");
-const defaultConfig = require("../../res/defaultConfig");
+const defaultConfig = require("../../res/defaultConfig.json");
 
 exports.command = "set <key> <value>";
 exports.desc = "Sets the key and value pair in the config.";

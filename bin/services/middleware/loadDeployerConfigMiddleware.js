@@ -3,7 +3,7 @@ const path = require("path");
 const { logger } = require("../../utils/logger");
 
 const configFileName = "config.json";
-const defaultDeployerConfig = require("../../res/defaultConfig");
+const defaultDeployerConfig = require("../../res/defaultConfig.json");
 
 function loadDeployerConfigMiddleware({ argv, installPath }) {
   const deployerConfigFilePath = path.resolve(installPath, configFileName);
