@@ -1,6 +1,6 @@
-const { logger } = require("../utils/logger");
+const { logger } = require("../../utils/logger");
 const fs = require("fs");
-const defaultConfig = require("../res/defaultConfig");
+const defaultConfig = require("../../res/defaultConfig");
 
 exports.command = "set <key> <value>";
 exports.desc = "Sets the key and value pair in the config.";
@@ -10,7 +10,7 @@ exports.builder = (yargs) => {
     if (!acceptableKeys.includes(argv.key)) {
       throw new Error(
         logger.err(
-          `Key ${argv.key} is not supported. Acceptable keys are: ${acceptableKeys.join()}`
+          `Key ${argv.key} is not supported. Acceptable keys are:\n${acceptableKeys.join()}`
         )
       );
     }
@@ -19,7 +19,7 @@ exports.builder = (yargs) => {
       case "name":
         var validCharset = /^[a-zA-Z0-9-]+$/;
         if (!validCharset.test(argv.value)) {
-          throw new Error(logger.err(`Name can only contain alphanumeric characters abd "-"`));
+          throw new Error(logger.err(`Name can only contain alphanumeric characters and "-".`));
         }
         argv.value = argv.value.toLowerCase();
         break;
@@ -33,7 +33,7 @@ exports.handler = function (argv) {
   fs.writeFileSync(argv.deployerConfigFilePath, JSON.stringify(configFile));
   console.log(
     `${logger.success(
-      `Config key ${logger.info(argv.key)} has been successfully set to ${logger.info(argv.value)}`
+      `Config key ${logger.info(argv.key)} has been successfully set to ${logger.info(argv.value)}.`
     )}`
   );
 };

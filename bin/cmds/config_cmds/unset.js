@@ -1,6 +1,6 @@
-const { logger } = require("../utils/logger");
+const { logger } = require("../../utils/logger");
 const fs = require("fs");
-const defaultConfig = require("../res/defaultConfig");
+const defaultConfig = require("../../res/defaultConfig");
 
 exports.command = "unset <key>";
 exports.desc = "Reverts the key to its default value.";
@@ -10,7 +10,7 @@ exports.builder = (yargs) => {
     if (!acceptableKeys.includes(argv.key)) {
       throw new Error(
         logger.err(
-          `Key ${argv.key} is not supported. Acceptable keys are: ${acceptableKeys.join()}.`
+          `Key ${argv.key} is not supported. Acceptable keys are:\n${acceptableKeys.join()}`
         )
       );
     }
