@@ -1,4 +1,4 @@
-const { logger } = require("../../utils/logger");
+const { logger, formatter } = require("../../utils/textUtils");
 const fs = require("fs");
 const defaultConfig = require("../../res/defaultConfig.json");
 
@@ -9,8 +9,8 @@ exports.builder = (yargs) => {
     const acceptableKeys = Object.keys(defaultConfig);
     if (!acceptableKeys.includes(argv.key)) {
       throw new Error(
-        logger.err(
-          `Key ${argv.key} is not supported. Acceptable keys are:\n${acceptableKeys.join()}`
+        formatter.error(
+          `Key ${argv.key} is not supported. Acceptable keys are:\n${acceptableKeys.join(", ")}`
         )
       );
     }
@@ -21,9 +21,9 @@ exports.handler = function (argv) {
   const configFile = argv.deployerConfig;
   configFile[argv.key] = defaultConfig[argv.key];
   fs.writeFileSync(argv.deployerConfigFilePath, JSON.stringify(configFile));
-  console.log(
-    `${logger.success(
-      `Config key ${logger.info(argv.key)} has been successfully reverted to default.`
-    )}`
+  logger.info(
+    formatter.success(
+      `Config key ${formatter.info(argv.key)} has been successfully reverted to default.`
+    )
   );
 };

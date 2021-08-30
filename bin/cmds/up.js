@@ -1,9 +1,10 @@
 const { deploy } = require("../services/deploy");
-const { log, err, info } = require("../utils/logger");
+const { logger, formatter } = require("../utils/textUtils");
 const YAML = require("yamljs");
 const fs = require("fs");
 const { spawnWorker } = require("../utils/workerUtils");
 const { cosmiconfigSync } = require("cosmiconfig");
+const { exit } = require("yargs");
 
 const explorerSync = cosmiconfigSync("", { searchPlaces: ["deployer.yml"] });
 
@@ -18,10 +19,6 @@ exports.builder = (yargs) => {
       normalize: true,
       type: "string",
     })
-    .option("quiet", {
-      describe: "Suppresses verbose output from worker processes",
-      type: "boolean",
-    })
     .check((argv) => {
       try {
         fs.accessSync(argv.f, fs.R_OK);
@@ -31,7 +28,7 @@ exports.builder = (yargs) => {
         // deployer.yml is the default value of -f
         if (argv.f === "deployer.yml") {
           const result = explorerSync.search();
-          if (result.filepath) {
+          if (result && result.filepath) {
             argv.targetCWD = result.filepath.substr(0, result.filepath.lastIndexOf("\\"));
             //update both aliases of the file path
             argv.f = result.filepath;
@@ -40,23 +37,26 @@ exports.builder = (yargs) => {
               fs.accessSync(argv.f, fs.R_OK);
               return true;
             } catch (e2) {
-              throw new Error(err(`Argument check failed: ${argv.f} is not a readable file.`));
+              throw new Error(
+                formatter.error(`Argument check failed: ${argv.f} is not a readable file.`)
+              );
             }
           }
         }
-        throw new Error(err(`Argument check failed: ${argv.f} is not a readable file.`));
+        throw new Error(
+          formatter.error(`Argument check failed: ${argv.f} is not a readable file or not found.`)
+        );
       }
     });
 };
 exports.handler = function (argv) {
   const serviceArray = [].concat(argv.service).concat(argv.services);
-  process.env.QUIET_FLAG = argv.quiet ? true : false;
   const configObject = validateConfig(argv.file);
 
   if (serviceArray.length == 1) {
     if (!configObject.services[argv.service]) {
-      log(err(`Config file does not contain service: "${argv.service}".`), true);
-      process.exit(1);
+      logger.fatal(formatter.error(`Config file does not contain service: "${argv.service}".`));
+      exit(1);
     }
 
     //If imageName is not defined in the config use the service key as imageName
@@ -88,30 +88,32 @@ function validateConfig(configFilePath) {
   try {
     const config = YAML.parse(fs.readFileSync(configFilePath, "utf8"));
     if (!config.services) {
-      log(err(`Config file must contain "services" top level key.`), true);
-      process.exit(1);
+      logger.fatal(formatter.error(`Config file must contain "services" top level key.`));
+      exit(1);
     } else {
       Object.keys(config.services).forEach((k) => {
         if (k === "all") {
-          log(
-            err(`Services cannot contain "all" key. Key reserved for deploying all images.`),
-            true
+          logger.fatal(
+            formatter.error(
+              `Services cannot contain "all" key. Key reserved for deploying all images.`
+            )
           );
-          process.exit(1);
+          exit(1);
         }
         if (!(config.services[k].serviceName && config.services[k].build)) {
-          log(err(`Missing key components in service ${k}.`), true);
-          log(
-            `Each service must contain "serviceName" and "build" keys. "imageName" is optional and uses the service key as default.`
+          logger.fatal(
+            formatter.error(
+              `Missing key components in service ${k}. Each service must contain "serviceName" and "build" keys. "imageName" is optional and uses the service key as default.`
+            )
           );
-          process.exit(1);
+          exit(1);
         }
       });
       return config;
     }
   } catch (e) {
-    log(err("Exception thrown while parsing config file."), true);
-    log(e, true);
-    process.exit(1);
+    logger.fatal(formatter.error("Exception thrown while parsing config file."));
+    logger.debug(e);
+    exit(1);
   }
 }

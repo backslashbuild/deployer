@@ -1,5 +1,5 @@
 const spawn = require("cross-spawn");
-const { err, success, isQuiet, log } = require("./logger");
+const { logger, formatter } = require("./textUtils");
 
 /**
  * @description Spawns a cross-spawn worker process to execute provided command with arguments.
@@ -14,13 +14,15 @@ function spawnWorker(command, args, name = "Cross-Spawn ChildProcess") {
 
   worker.on("exit", function (code) {
     code === 0
-      ? log(
-          success(`Worker process for deployment of ${name} exited with code ` + code.toString()),
-          true
+      ? logger.info(
+          formatter.success(
+            `Worker process for deployment of ${name} exited with code ` + code.toString()
+          )
         )
-      : log(
-          err(`Worker process for deployment of ${name} exited with code ` + code.toString()),
-          true
+      : logger.error(
+          formatter.error(
+            `Worker process for deployment of ${name} exited with code ` + code.toString()
+          )
         );
   });
   return worker;
@@ -34,7 +36,7 @@ function spawnWorker(command, args, name = "Cross-Spawn ChildProcess") {
  */
 async function awaitableSpawnProcess(command, args) {
   const worker = require("child_process").spawn(command, args, {
-    stdio: isQuiet() ? "ignore" : "inherit",
+    stdio: logger.isLevelSilent(logger.loglevels.INFO) ? "ignore" : "inherit",
   });
   const exitCode = await new Promise((resolve, reject) => {
     worker.on("exit", (code) => {
