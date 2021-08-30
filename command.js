@@ -66,8 +66,8 @@ yargs
   )
   .demandCommand()
   .commandDir("bin/cmds")
-  // .strictCommands()
   .help()
+  .group(["q", "l", "help", "version"], "Global options:")
   .fail((msg, e, yargs) => {
     logger.fatal("");
     logger.fatal(msg);

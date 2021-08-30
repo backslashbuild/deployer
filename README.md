@@ -1,4 +1,4 @@
-<h1 style="font-size:40px"> Deployer v2.1.0</h1>
+<h1 style="font-size:40px"> Deployer v2.1.1</h1>
 
 Deployer is an npm package dealing with replacing the image of a service in a remote docker swarm using local docker images. This is achieved by running a local docker registry. The local machine builds and pushes the images to that registry and the remote machine pulls and deploys them using an ssh reverse tunnel.
 
@@ -48,6 +48,8 @@ services:
 
 # Documentation
 
+## Commands
+
 - [Registry](#registry)
   - [Start](#registry-start)
   - [Stop](#registry-stop)
@@ -56,6 +58,17 @@ services:
   - [Set](#config-set)
   - [Unset](#config-unset)
   - [Reset](#config-reset)
+
+## Global options
+
+```
+-q, --quiet     - Suppresses verbose output. Sets log-level to 1.
+-l, --log-level - Sets the log-level to provided level. Accepts numerical value between
+                 0-7 or one of the choices.
+                 [choices: "OFF", "FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "ALL"]
+    --help      - Show help.
+    --version   - Show version number.
+```
 
 ---
 
@@ -95,7 +108,7 @@ This is deployer's core functionality, named to match the convention of `docker-
 
 ### Commands
 
-### `deployer up <host> <service> [services..] [-f <ConfigFilePath>] [--quiet]`
+### `deployer up <host> <service> [services..] [-f <ConfigFilePath>]`
 
 #### Description
 
@@ -111,13 +124,12 @@ services - Additional deployer.yaml keys to be deployed in parallel
 
 #### Example command
 
-`deployer up user@example.com my-hello hello-world1 --quiet`
+`deployer up user@example.com my-hello hello-world1 -q`
 
 #### Options
 
 ```
 -f --file - Path to the config file. Default: "deployer.yml"
---quiet - Suppresses verbose output from worker processes
 ```
 
 ---
@@ -132,13 +144,15 @@ Deployer uses global configuration, stored in `config.json` at the installation 
 
 ```json
 {
-  "name": "deployer"
+  "name": "deployer",
+  "loglevel": "INFO"
 }
 ```
 
 ### Dictionary
 
 - "**name**": A string that may contain alphanumeric characters and "-" which is used when deployer tags images. It is advised that a meaningful `name` is set to enable communication in a team environment.
+- "**loglevel**" A numerical value between 0-7 or a string representing a log level. Available options are: `OFF`, `FATAL`, `ERROR`, `WARNING`, `INFO`, `DEBUG`, `TRACE`, `ALL`.
 
 ### Commands
 
@@ -151,7 +165,7 @@ Updates the deployer config `<key>` to provided `<value>`.
 #### Arguments
 
 ```
-key - The key of the config to be updated
+key   - The key of the config to be updated
 value - The value to be stored in the key
 ```
 
