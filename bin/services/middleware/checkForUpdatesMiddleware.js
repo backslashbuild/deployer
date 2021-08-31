@@ -1,8 +1,46 @@
 const fetch = require("node-fetch");
-const fs = require("fs");
-const path = require("path");
 const localPackageJson = require("../../../package.json");
 const { logger, formatter } = require("../../utils/textUtils");
+
+/**
+ * @description Fetches the package.json of the master branch from Deployer's repository and parses its contents into an object.
+ * @returns {object} Parsed package.json from remote.
+ */
+async function getRemotePatchNotes() {
+  const requestUrl =
+    "https://raw.githubusercontent.com/backslashbuild/deployer/master/package.json";
+  const result = await fetch(requestUrl, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  }).then(async (r) => {
+    const responseText = await r.text();
+    return JSON.parse(responseText);
+  });
+  return result;
+}
+
+function printNote(noteObject, depth, printFunc) {
+  const whiteSpace = new Array(depth + 1).join("\t");
+  printFunc(`${whiteSpace}* ${noteObject.note}`);
+  printNotes(noteObject.children, depth + 1, printFunc);
+}
+
+function printNotes(notesArray, depth, printFunc) {
+  notesArray.forEach((note) => {
+    printNote(note, depth, printFunc);
+  });
+}
+
+function printPatchNotes(version, patchNotes, printFunc) {
+  let depth = 0;
+  printFunc("");
+  printFunc(`  ${formatter.warning(version)}`);
+  printFunc(formatter.success("---------"));
+  printNotes(patchNotes[version].notes, depth, printFunc);
+  printFunc("");
+}
 
 /**
  * @description Fetches the package.json of the master branch from Deployer's repository and parses its contents into an object.
