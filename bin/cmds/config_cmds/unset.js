@@ -1,6 +1,7 @@
 const { logger, formatter } = require("../../utils/textUtils");
 const fs = require("fs");
 const defaultConfig = require("../../res/defaultConfig.json");
+const { deployerConfigFilePath } = require("../../utils/configUtils");
 
 exports.command = "unset <key>";
 exports.desc = "Reverts the key to its default value.";
@@ -20,7 +21,7 @@ exports.builder = (yargs) => {
 exports.handler = function (argv) {
   const configFile = argv.deployerConfig;
   configFile[argv.key] = defaultConfig[argv.key];
-  fs.writeFileSync(argv.deployerConfigFilePath, JSON.stringify(configFile));
+  fs.writeFileSync(deployerConfigFilePath, JSON.stringify(configFile));
   logger.info(
     formatter.success(
       `Config key ${formatter.info(argv.key)} has been successfully reverted to default.`

@@ -1,6 +1,7 @@
 const { logger, formatter } = require("../../utils/textUtils");
 const fs = require("fs");
 const defaultConfig = require("../../res/defaultConfig.json");
+const { deployerConfigFilePath } = require("../../utils/configUtils");
 
 exports.command = "set <key> <value>";
 exports.desc = "Sets the key and value pair in the config.";
@@ -59,7 +60,7 @@ exports.builder = (yargs) => {
 exports.handler = function (argv) {
   const configFile = argv.deployerConfig;
   configFile[argv.key] = argv.value;
-  fs.writeFileSync(argv.deployerConfigFilePath, JSON.stringify(configFile));
+  fs.writeFileSync(deployerConfigFilePath, JSON.stringify(configFile));
   logger.info(
     `${formatter.success(
       `Config key ${formatter.info(argv.key)} has been successfully set to ${formatter.info(
