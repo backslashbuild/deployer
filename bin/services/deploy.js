@@ -182,7 +182,7 @@ async function pullAndTagStage(imageName, sshHost, destPort, tagName) {
   shell.exec(
     `docker -H ssh://${sshHost} image tag localhost:${destPort}/${imageName} ${tagName}/${imageName}:latest`,
     {
-      silent: isQuiet(),
+      silent: logger.isLevelSilent(logger.loglevels.INFO),
     }
   );
   logger.info(formatter.success(`Tag completed.`));
