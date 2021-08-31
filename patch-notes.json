@@ -96,5 +96,9 @@
       { "note": "Moves config.json to `~/.deployer/config.json`.", "children": [] }
     ],
     "date": "31-08-2021"
+  },
+  "2.1.3": {
+    "notes": [{ "note": "Logs patch notes of available updates.", "children": [] }],
+    "date": "01-09-2021"
   }
 }
