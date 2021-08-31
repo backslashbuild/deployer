@@ -5,7 +5,7 @@ LEGACY
 */
 const shell = require("shelljs");
 const { gzip } = require("node-gzip");
-const { err, success, info, log, isQuiet } = require("./utils/logger");
+const { err, success, info, log, isQuiet } = require("../utils/logger");
 fs = require("fs");
 const fsPromises = fs.promises;
 

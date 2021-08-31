@@ -1,12 +1,13 @@
 const shell = require("shelljs");
+const { exit } = require("yargs");
 const {
   getContainerPort,
   getNumberOfNodes,
   getServicePort,
   getAllPortsExposedInSwarm,
-} = require("./utils/dockerUtils");
-const { err, success, info, log, isQuiet } = require("./utils/logger");
-const { awaitableSpawnProcess } = require("./utils/workerUtils");
+} = require("../utils/dockerUtils");
+const { logger, formatter } = require("../utils/textUtils");
+const { awaitableSpawnProcess } = require("../utils/workerUtils");
 
 /**
  * @description Prints the information given from command arguments.
@@ -16,11 +17,11 @@ const { awaitableSpawnProcess } = require("./utils/workerUtils");
  * @param {string} sshHost - The remote host in which the swarm lives.
  */
 function displayInfo(serviceName, imageName, build, sshHost) {
-  log(`Service name: ${info(serviceName)}`);
-  log(`Image name: ${info(imageName)}`);
-  log(`Build command: ${info(build)}`);
-  log(`SSH host: ${info(sshHost)}`);
-  log("");
+  logger.info(`Service name: ${formatter.info(serviceName)}`);
+  logger.info(`Image name: ${formatter.info(imageName)}`);
+  logger.info(`Build command: ${formatter.info(build)}`);
+  logger.info(`SSH host: ${formatter.info(sshHost)}`);
+  logger.info("");
 }
 
 /**
@@ -28,15 +29,21 @@ function displayInfo(serviceName, imageName, build, sshHost) {
  * @returns {string} The port on which deployer-registry is exposed at.
  */
 function getRegistryPort() {
-  log(`Getting the port of the local docker registry ...`);
+  logger.info(`Getting the port of the local docker registry ...`);
   const srcPort = getContainerPort("deployer-registry");
   if (srcPort === -1) {
     throw new Error(
-      `${err(`Is the deployer registry running? Try running: `)}${info(`deployer registry start`)}`
+      `${formatter.error(`Is the deployer registry running? Try running:`)}\n${formatter.info(
+        `deployer registry start`
+      )}`
     );
   }
-  log(`${success(`Port retrieved successfully.`)} Registry running on port: ${info(srcPort)}`);
-  log("");
+  logger.info(
+    `${formatter.success(
+      `Port retrieved successfully.`
+    )} Registry running on port: ${formatter.info(srcPort)}`
+  );
+  logger.info("");
   return srcPort;
 }
 
@@ -48,7 +55,7 @@ function getRegistryPort() {
  * @returns {Promise<Object>} {tunnelProcess, destPort} - tunnelProcess is the ChildProcess maintaining the tunnel. destPort is the port allocated by the tunnel for the remote host.
  */
 async function createTunnel(sshHost, srcPort, serviceName) {
-  log(`Creating reverse tunnel to ${info(sshHost)} ...`);
+  logger.info(`Creating reverse tunnel to ${formatter.info(sshHost)} ...`);
 
   let destPort = "";
   const tunnelProcess = require("child_process").spawn("ssh", [
@@ -68,14 +75,22 @@ async function createTunnel(sshHost, srcPort, serviceName) {
     //in fact by default the message is on stderr for some reason. Leaving stdout as well just in case that changes some day.
     tunnelProcess.stderr.on("data", function (data) {
       const rx = /Allocated port ([0-9]+)/g;
-      resolve(rx.exec(data.toString())[1]);
+      try {
+        resolve(rx.exec(data.toString())[1]);
+      } catch (e) {
+        reject(formatter.error(data.toString()));
+      }
     });
   });
 
-  log(
-    success(`Reverse tunnel to ${info(sshHost)} established at ${info(`${srcPort}:${destPort}`)}.`)
+  logger.info(
+    formatter.success(
+      `Reverse tunnel to ${formatter.info(sshHost)} established at ${formatter.info(
+        `${srcPort}:${destPort}`
+      )}.`
+    )
   );
-  log("");
+  logger.info("");
   return { tunnelProcess, destPort };
 }
 
@@ -85,21 +100,21 @@ async function createTunnel(sshHost, srcPort, serviceName) {
  * @param {string} [targetCWD] - Optional - The target CWD for the build command.
  */
 function buildStage(build, targetCWD = undefined) {
-  log(`Building the image ...`);
+  logger.info(`Building the image ...`);
 
   //configPath is set if deployer.yml is not on cwd
   if (targetCWD) {
     shell.pushd("-q", targetCWD);
   }
 
-  const buildResult = shell.exec(build, { silent: isQuiet() });
+  const buildResult = shell.exec(build, { silent: logger.isLevelSilent(logger.loglevels.INFO) });
   if (buildResult.code !== 0) {
-    log(err(buildResult.stderr));
+    logger.info(formatter.error(buildResult.stderr));
     throw new Error("Failed to build the image using the command provided in the config.");
   }
 
-  log(success(`Building completed.`));
-  log("");
+  logger.info(formatter.success(`Building completed.`));
+  logger.info("");
 }
 
 /**
@@ -108,16 +123,20 @@ function buildStage(build, targetCWD = undefined) {
  * @param {string} srcPort - the port the registry is currently running on.
  */
 async function tagAndPushStage(imageName, srcPort) {
-  log(`Tagging image ${info(imageName)} with tag ${info(`localhost:${srcPort}/${imageName}`)} ...`);
+  logger.info(
+    `Tagging image ${formatter.info(imageName)} with tag ${formatter.info(
+      `localhost:${srcPort}/${imageName}`
+    )} ...`
+  );
 
   shell.exec(`docker image tag ${imageName} localhost:${srcPort}/${imageName}`, {
-    silent: isQuiet(),
+    silent: logger.isLevelSilent(logger.loglevels.INFO),
   });
 
-  log(success(`Tag successful.`));
-  log("");
+  logger.info(formatter.success(`Tag successful.`));
+  logger.info("");
 
-  log(`Pushing ${imageName} to the local registry ...`);
+  logger.info(`Pushing ${imageName} to the local registry ...`);
 
   const pushExitCode = await awaitableSpawnProcess(`docker`, [
     `image`,
@@ -125,11 +144,11 @@ async function tagAndPushStage(imageName, srcPort) {
     `localhost:${srcPort}/${imageName}`,
   ]);
   if (pushExitCode !== 0) {
-    throw new Error(err(`Failed to push image to local deployer-registry.`));
+    throw new Error(formatter.error(`Failed to push image to local deployer-registry.`));
   }
 
-  log(success(`Pushing completed.`));
-  log("");
+  logger.info(formatter.success(`Pushing completed.`));
+  logger.info("");
 }
 
 /**
@@ -137,9 +156,14 @@ async function tagAndPushStage(imageName, srcPort) {
  * @param {string} imageName - The name of the image to be pulled.
  * @param {string} sshHost - The remote host which will pull the image.
  * @param {string} destPort - The port on the remote machine that is tunnelled to the local registry.
+ * @param {string} tagName - The name to be used when tagging the image.
  */
-async function pullAndTagStage(imageName, sshHost, destPort) {
-  log(`Pulling ${info(imageName)} from ${info(`localhost:${destPort}`)} at ${info(sshHost)} ...`);
+async function pullAndTagStage(imageName, sshHost, destPort, tagName) {
+  logger.info(
+    `Pulling ${formatter.info(imageName)} from ${formatter.info(
+      `localhost:${destPort}`
+    )} at ${formatter.info(sshHost)} ...`
+  );
 
   const pullResultCode = await awaitableSpawnProcess(`docker`, [
     `-H`,
@@ -148,21 +172,21 @@ async function pullAndTagStage(imageName, sshHost, destPort) {
     `localhost:${destPort}/${imageName}`,
   ]);
   if (pullResultCode !== 0) {
-    throw new Error(err(`Failed to pull image at remote host.`));
+    throw new Error(formatter.error(`Failed to pull image at remote host.`));
   }
 
-  log(success(`Pull completed.`));
-  log("");
+  logger.info(formatter.success(`Pull completed.`));
+  logger.info("");
 
-  log(`Tagging the image with ${info(`deployer/${imageName}:latest`)} ...`);
+  logger.info(`Tagging the image with ${formatter.info(`${tagName}/${imageName}:latest`)} ...`);
   shell.exec(
-    `docker -H ssh://${sshHost} image tag localhost:${destPort}/${imageName} deployer/${imageName}:latest`,
+    `docker -H ssh://${sshHost} image tag localhost:${destPort}/${imageName} ${tagName}/${imageName}:latest`,
     {
-      silent: isQuiet(),
+      silent: logger.isLevelSilent(logger.loglevels.INFO),
     }
   );
-  log(success(`Tag completed.`));
-  log("");
+  logger.info(formatter.success(`Tag completed.`));
+  logger.info("");
 }
 
 /**
@@ -179,16 +203,17 @@ function getRandomNumber(min, max) {
  * @description Handles deployment of the image in a multi-node swarm.
  * @param {string} imageName - The name of the image to be used when updating the service.
  * @param {string} sshHost - The sshHost of the remote swarm containing the service.
+ * @param {string} tagName - The name to be used when tagging the image.
  * @returns {Promise<string>} The image name after tagging it with the remote deployer-registry.
  */
-async function handleMultiNodeDeploy(imageName, sshHost) {
-  log(`Multi-node swarm detected. Checking for remote deployer-registry ...`);
+async function handleMultiNodeDeploy(imageName, sshHost, tagName) {
+  logger.info(`Multi-node swarm detected. Checking for remote deployer-registry ...`);
   const result = shell.exec(`docker -H ssh://${sshHost} service ls`, { silent: true });
   const registryExists = result.stdout.includes(`deployer-registry`);
 
   if (!registryExists) {
-    log("");
-    log(`Remote deployer-registry not found, creating deployer-registry service ...`);
+    logger.info("");
+    logger.info(`Remote deployer-registry not found, creating deployer-registry service ...`);
 
     let port = "";
     const portsUsed = getAllPortsExposedInSwarm(sshHost);
@@ -211,25 +236,25 @@ async function handleMultiNodeDeploy(imageName, sshHost) {
       `registry:2`,
     ]);
     if (registryCreationResultCode !== 0) {
-      throw new Error(err(`Failed create remote deployer-registry.`));
+      throw new Error(formatter.error(`Failed create remote deployer-registry.`));
     }
 
-    log(
-      `${success(`Remote deployer-registry created successfuly at port`)} ${info(port)} ${success(
-        "."
-      )}`
+    logger.info(
+      formatter.success(
+        `Remote deployer-registry created successfuly at port ${formatter.info(port)}.`
+      )
     );
-    log("");
+    logger.info("");
   }
   const rRegistryPort = getServicePort("deployer-registry", sshHost);
-  log(`Remote deployer-registry found at port ${info(rRegistryPort)}.`);
+  logger.info(`Remote deployer-registry found at port ${formatter.info(rRegistryPort)}.`);
 
-  log(`Tagging image with remote registry ...`);
+  logger.info(`Tagging image with remote registry ...`);
   shell.exec(
-    `docker -H ssh://${sshHost} image tag deployer/${imageName}:latest 127.0.0.1:${rRegistryPort}/${imageName}:latest`
+    `docker -H ssh://${sshHost} image tag ${tagName}/${imageName}:latest 127.0.0.1:${rRegistryPort}/${imageName}:latest`
   );
 
-  log(`Pushing image ${info(imageName)} to remote deployer-registry.`);
+  logger.info(`Pushing image ${formatter.info(imageName)} to remote deployer-registry.`);
   const pushResultCode = await awaitableSpawnProcess(`docker`, [
     `-H`,
     `ssh://${sshHost}`,
@@ -237,15 +262,15 @@ async function handleMultiNodeDeploy(imageName, sshHost) {
     `127.0.0.1:${rRegistryPort}/${imageName}:latest`,
   ]);
   if (pushResultCode !== 0) {
-    throw new Error(err(`Failed to push image to remote deployer-registry.`));
+    throw new Error(formatter.error(`Failed to push image to remote deployer-registry.`));
   }
 
-  log(
-    `${success("Image")} ${info(imageName)} ${success(
+  logger.info(
+    `${formatter.success("Image")} ${formatter.info(imageName)} ${formatter.success(
       "pushed successfully to the remote deployer-registry."
     )}`
   );
-  log("");
+  logger.info("");
   return `127.0.0.1:${rRegistryPort}/${imageName}:latest`;
 }
 
@@ -256,7 +281,7 @@ async function handleMultiNodeDeploy(imageName, sshHost) {
  * @param {string} sshHost - the ssh host that contains the swarm which contains the service.
  */
 async function deployImage(imageName, serviceName, sshHost) {
-  log(`Deploying the image...`);
+  logger.info(`Deploying the image...`);
   const deployResultCode = await awaitableSpawnProcess(`docker`, [
     `-H`,
     `ssh://${sshHost}`,
@@ -268,20 +293,23 @@ async function deployImage(imageName, serviceName, sshHost) {
     serviceName,
   ]);
   if (deployResultCode !== 0) {
-    throw new Error(err(`Failed to deploy image in the remote swarm.`));
+    throw new Error(formatter.error(`Failed to deploy image in the remote swarm.`));
   }
 
-  log(success(`${serviceName} updated successfully.`), true);
-  log("");
+  logger.info(formatter.success(`${serviceName} updated successfully.`));
+  logger.info("");
 }
 
 /**
  * @description Executes deploy sequence.
  * @param {string} sshHost - The remote host to deploy the image to.
  * @param {Object} config - JSON containing the information from the config file.
+ * @param {string} targetCWD - CWD for build commands.
+ * @param {string} deployerConfig - Deployer configuration values.
  */
-async function deploy(sshHost, config, targetCWD) {
+async function deploy(sshHost, config, targetCWD, deployerConfig) {
   const { serviceName, imageName, build } = config;
+  const { name: tagName } = deployerConfig;
   displayInfo(serviceName, imageName, build, sshHost);
   let tunnelProcessRef = null;
   try {
@@ -290,17 +318,17 @@ async function deploy(sshHost, config, targetCWD) {
     tunnelProcessRef = tunnelProcess;
     buildStage(build, targetCWD);
     await tagAndPushStage(imageName, srcPort);
-    await pullAndTagStage(imageName, sshHost, destPort);
+    await pullAndTagStage(imageName, sshHost, destPort, tagName);
 
-    let taggedImage = `deployer/${imageName}:latest`;
+    let taggedImage = `${tagName}/${imageName}:latest`;
     if (getNumberOfNodes(sshHost) > 1) {
-      taggedImage = await handleMultiNodeDeploy(imageName, sshHost);
+      taggedImage = await handleMultiNodeDeploy(imageName, sshHost, tagName);
     }
 
     await deployImage(taggedImage, serviceName, sshHost);
   } catch (error) {
-    log(error, true);
-    process.exitCode = 1;
+    logger.fatal(error);
+    exit(1);
   } finally {
     if (tunnelProcessRef != null) {
       tunnelProcessRef.kill();

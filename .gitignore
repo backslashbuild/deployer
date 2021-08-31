@@ -4,3 +4,4 @@ docker-compose.yml
 test-compose.yml
 todo.txt
 /node_modules
+config.json
