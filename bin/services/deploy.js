@@ -133,7 +133,7 @@ async function tagAndPushStage(imageName, srcPort) {
     silent: logger.isLevelSilent(logger.loglevels.INFO),
   });
 
-  logger.info(success(`Tag successful.`));
+  logger.info(formatter.success(`Tag successful.`));
   logger.info("");
 
   logger.info(`Pushing ${imageName} to the local registry ...`);
