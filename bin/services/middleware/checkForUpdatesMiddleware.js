@@ -30,7 +30,9 @@ async function getRemotePatchNotes() {
 function printNote(noteObject, depth, printFunc) {
   const whiteSpace = new Array(depth + 1).join("\t");
   printFunc(`${whiteSpace}* ${noteObject.note}`);
-  printNotes(noteObject.children, depth + 1, printFunc);
+  if (noteObject.children) {
+    printNotes(noteObject.children, depth + 1, printFunc);
+  }
 }
 
 /**
