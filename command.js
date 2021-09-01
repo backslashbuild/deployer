@@ -46,24 +46,17 @@ yargs
       }
     },
   })
-  .middleware(
-    [
-      //sets install path in process.env to make it available to all middleware
-      (argv, yargs) => {
-        process.env.INSTALL_PATH = __dirname;
-      },
-      (argv, yargs) => {
-        loadDeployerConfigMiddleware(argv);
-      },
-      (argv, yargs) => {
-        setloglevelMiddleware(argv);
-      },
-      async (argv, yargs) => {
-        await checkForUpdatesMiddleware();
-      },
-    ],
-    true
-  )
+  .middleware([
+    (argv, yargs) => {
+      loadDeployerConfigMiddleware(argv);
+    },
+    (argv, yargs) => {
+      setloglevelMiddleware(argv);
+    },
+    async (argv, yargs) => {
+      await checkForUpdatesMiddleware();
+    },
+  ])
   .demandCommand()
   .commandDir("bin/cmds")
   .help()

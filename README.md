@@ -1,4 +1,4 @@
-<h1 style="font-size:40px"> Deployer v2.1.1</h1>
+<h1 style="font-size:40px"> Deployer v2.1.2</h1>
 
 Deployer is an npm package dealing with replacing the image of a service in a remote docker swarm using local docker images. This is achieved by running a local docker registry. The local machine builds and pushes the images to that registry and the remote machine pulls and deploys them using an ssh reverse tunnel.
 
@@ -138,7 +138,7 @@ services - Additional deployer.yaml keys to be deployed in parallel
 
 ### Description
 
-Deployer uses global configuration, stored in `config.json` at the installation directory. Deployer comes with a default set of values configuration all of which can be changed using `deployer config set` and can be reset to default using `deployer config unset`. The config can be reset to default using `deployer config reset`.
+Deployer uses global configuration, stored at `~/.deployer/config.json`. Deployer comes with a default set of values configuration all of which can be changed using `deployer config set` and can be reset to default using `deployer config unset`. The config can be reset to default using `deployer config reset`.
 
 ### Default config file
 

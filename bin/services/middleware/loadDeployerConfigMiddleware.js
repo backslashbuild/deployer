@@ -1,8 +1,7 @@
 const fs = require("fs");
-const path = require("path");
+const { exit } = require("yargs");
+const { deployerConfigFilePath, deployerDirectory } = require("../../utils/configUtils");
 const { logger, formatter } = require("../../utils/textUtils");
-
-const configFileName = "config.json";
 const defaultDeployerConfig = require("../../res/defaultConfig.json");
 
 /**
@@ -14,8 +13,10 @@ const defaultDeployerConfig = require("../../res/defaultConfig.json");
  * @param {object} argv - Argv object supplied from yargs
  */
 function loadDeployerConfigMiddleware(argv) {
-  const installPath = process.env.INSTALL_PATH;
-  const deployerConfigFilePath = path.resolve(installPath, configFileName);
+  //If deployer directory does not exist, one is created
+  if (!fs.existsSync(deployerDirectory)) {
+    fs.mkdirSync(deployerDirectory);
+  }
 
   //If config file does not exist, one is created
   const exists = fs.existsSync(deployerConfigFilePath);
@@ -56,7 +57,6 @@ function loadDeployerConfigMiddleware(argv) {
     }
 
     //Update argv
-    argv.deployerConfigFilePath = deployerConfigFilePath;
     argv.deployerConfig = deployerConfig;
   } catch (e) {
     //Warn but don't abort job, use default config instead

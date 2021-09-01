@@ -1,6 +1,7 @@
 const fetch = require("node-fetch");
 const fs = require("fs");
 const path = require("path");
+const localPackageJson = require("../../../package.json");
 const { logger, formatter } = require("../../utils/textUtils");
 
 /**
@@ -51,28 +52,6 @@ function isUpdateRequired({ localVersion, remoteVersion }) {
  * @returns {Promise<void>} An awaitable promise when the check for updates is done.
  */
 async function checkForUpdatesMiddleware() {
-  const installPath = process.env.INSTALL_PATH;
-  const deployerPackageJsonPath = path.resolve(installPath, "package.json");
-  try {
-    fs.accessSync(deployerPackageJsonPath, fs.R_OK);
-  } catch (e) {
-    logger.error(
-      formatter.warning(`Warning: Failed to check for updates, cannot access local package.json.`)
-    );
-    return;
-  }
-
-  let localPackageJson;
-  try {
-    const packageJsonText = fs.readFileSync(deployerPackageJsonPath, "utf8");
-    localPackageJson = JSON.parse(packageJsonText);
-  } catch (e) {
-    logger.error(
-      formatter.warning(`Warning: Failed to check for updates, cannot parse local package.json.`)
-    );
-    return;
-  }
-
   let remotePackageJson;
   try {
     remotePackageJson = await getRemotePackageJson();
@@ -80,6 +59,7 @@ async function checkForUpdatesMiddleware() {
     logger.error(
       formatter.warning(`Warning: Failed to check for updates, cannot fetch remote package.json.`)
     );
+    logger.debug(e);
     return;
   }
   if (
