@@ -1,0 +1,92 @@
+1.0.0:
+  notes:
+  - note: Adds core feature set.
+    children: []
+  - note: Adds `up` CLI.
+    children: []
+  date: 21-01-2021
+1.1.0:
+  notes:
+  - note: Adds usage of local docker registry to reduce data uploaded.
+    children: []
+  - note: 'Adds `registry` CLI:'
+    children:
+    - note: start
+      children: []
+    - note: stop
+      children: []
+  date: 29-01-2021
+1.1.1:
+  notes:
+  - note: Makes imageName key of deployer.yml optional by defaulting to top-level
+      key value.
+    children: []
+  date: 29-01-2021
+2.0.0:
+  notes:
+  - note: Adds multi node swarm support.
+    children: []
+  date: 21-02-2021
+2.0.1:
+  notes:
+  - note: Adds a patch to support docker update on `docker port <containerName>`.
+    children: []
+  date: 24-05-2021
+2.0.2:
+  notes:
+  - note: Adds cosmiconfig to improve locating of deployer.yml by scanning parent
+      directories of cwd.
+    children: []
+  date: 14-06-2021
+2.1.0:
+  notes:
+  - note: Adds global config feature.
+    children:
+    - note: Adds name key
+      children: []
+  - note: 'Adds `config` CLI:'
+    children:
+    - note: Set
+      children: []
+    - note: Unset
+      children: []
+    - note: Reset
+      children: []
+  - note: Adds more descriptive error message when failing to parse deployer.yml.
+    children: []
+  - note: Adds checking for updates.
+    children: []
+  - note: Bugfixes and general improvements.
+    children: []
+  - note: Upgrade 'yargs' dependency to 17.1.1
+    children: []
+  - note: Include node-fetch dependency
+    children: []
+  date: 27-08-2021
+2.1.1:
+  notes:
+  - note: Improves logging by using multiple logging levels.
+    children: []
+  - note: Adds loglevel key in global config.
+    children: []
+  - note: Adds `-l` option for using a specific log level for command.
+    children: []
+  - note: Changes to `-q` flag
+    children:
+    - note: Makes quiet flag global rather than specific to `up`.
+      children: []
+    - note: Changes behaviour to set log-level to `FATAL`
+      children: []
+  date: 30-08-2021
+2.1.2:
+  notes:
+  - note: Creates `~/.deployer/` directory to store the config.
+    children: []
+  - note: Moves config.json to `~/.deployer/config.json`.
+    children: []
+  date: 31-08-2021
+2.1.3:
+  notes:
+  - note: Logs patch notes of available updates.
+    children: []
+  date: 01-09-2021
