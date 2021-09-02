@@ -2,7 +2,7 @@
 <p align="center">
   <img width="450" src="https://raw.githubusercontent.com/backslashbuild/deployer/master/deployer_logo.png">
 </p>
-<h2 style="font-size:20px" align="center"> Deploy locally built docker images to remote docker swarm</h2>
+<div style="font-size:20px" align="center"> Deploy locally built docker images to remote docker swarm</div>
 <br>
 <br>
 
