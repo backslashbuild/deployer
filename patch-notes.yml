@@ -43,18 +43,18 @@
   - note: Adds more descriptive error message when failing to parse deployer.yml.
   - note: Adds checking for updates.
   - note: Bugfixes and general improvements.
-  - note: Upgrade 'yargs' dependency to 17.1.1
-  - note: Include node-fetch dependency
+  - note: Upgrade 'yargs' dependency to "17.1.1".
+  - note: Include node-fetch dependency.
 2.1.1:
   date: 30-08-2021
   notes:
   - note: Improves logging by using multiple logging levels.
   - note: Adds loglevel key in global config.
   - note: Adds `-l` option for using a specific log level for command.
-  - note: Changes to `-q` flag
+  - note: Changes to `-q` flag.
     children:
     - note: Makes quiet flag global rather than specific to `up`.
-    - note: Changes behaviour to set log-level to `FATAL`
+    - note: Changes behaviour to set log-level to `FATAL`.
 2.1.2:
   date: 31-08-2021
   notes:
