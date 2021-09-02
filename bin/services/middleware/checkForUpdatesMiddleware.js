@@ -1,13 +1,14 @@
 const fetch = require("node-fetch");
 const localPackageJson = require("../../../package.json");
 const { logger, formatter } = require("../../utils/textUtils");
+const YAML = require("yamljs");
 
 /**
- * @description Fetches the patch-notes.json of the master branch from Deployer's repository and parses its contents into an object.
- * @returns {object} Parsed patch-notes.json from remote.
+ * @description Fetches the patch-notes.yml of the master branch from Deployer's repository and parses its contents into an object.
+ * @returns {object} Parsed patch-notes.yml from remote.
  */
 async function getRemotePatchNotes() {
-  const requestUrl = `https://raw.githubusercontent.com/backslashbuild/deployer/master/patch-notes.json`;
+  const requestUrl = `https://raw.githubusercontent.com/backslashbuild/deployer/master/patch-notes.yml`;
   const result = await fetch(requestUrl, {
     method: "GET",
     headers: {
@@ -15,7 +16,10 @@ async function getRemotePatchNotes() {
     },
   }).then(async (r) => {
     const responseText = await r.text();
-    return JSON.parse(responseText);
+    if (responseText.split(" ")[0] === "404:") {
+      throw new Error("404: Not Found");
+    }
+    return YAML.parse(responseText);
   });
   return result;
 }
@@ -50,7 +54,7 @@ function printNotes(notesArray, depth, printFunc) {
 /**
  * @description Prints the patch notes of given version
  * @param {string} version - Version in the format "X.Y.Z".
- * @param {object} patchNotes - Patch notes object as read from patch-notes.json file.
+ * @param {object} patchNotes - Patch notes object as read from patch-notes.yml file.
  * @param {(text:string)=>void} printFunc - Function used to print.
  */
 function printPatchNotes(version, patchNotes, printFunc) {
@@ -68,16 +72,13 @@ function printPatchNotes(version, patchNotes, printFunc) {
  * @param {(text:string)=>void} printFunc - Function used to print.
  */
 async function printUpdates(localVersion, printFunc) {
-  //try catch is required here until master contains patch-notes.json
-  try {
-    const remotePatchNotes = await getRemotePatchNotes();
-    const updates = Object.keys(remotePatchNotes).filter(
-      (version) => versionComparator(localVersion, version) < 0
-    );
-    updates.forEach((version) => {
-      printPatchNotes(version, remotePatchNotes, printFunc);
-    });
-  } catch (e) {}
+  const remotePatchNotes = await getRemotePatchNotes();
+  const updates = Object.keys(remotePatchNotes).filter(
+    (version) => versionComparator(localVersion, version) < 0
+  );
+  updates.forEach((version) => {
+    printPatchNotes(version, remotePatchNotes, printFunc);
+  });
 }
 
 /**
@@ -143,7 +144,9 @@ async function checkForUpdatesMiddleware() {
     remotePackageJson = await getRemotePackageJson();
   } catch (e) {
     logger.error(
-      formatter.warning(`Warning: Failed to check for updates, cannot fetch remote package.json.`)
+      formatter.warning(
+        `Warning: Failed to check for updates, cannot fetch and parse remote package.json.\n`
+      )
     );
     logger.debug(e);
     return;
@@ -163,7 +166,17 @@ async function checkForUpdatesMiddleware() {
         )}\nto install the update`
       )
     );
-    await printUpdates(localPackageJson.version, logger.info);
+    try {
+      await printUpdates(localPackageJson.version, logger.info);
+    } catch (e) {
+      logger.warn(
+        formatter.warning(
+          `Warning: Failed to pull patch notes, cannot fetch and parse remote patch-notes.yml.\n`
+        )
+      );
+      logger.debug(e);
+      return;
+    }
   }
 }
 
