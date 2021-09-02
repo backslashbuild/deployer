@@ -1,0 +1,66 @@
+1.0.0:
+  date: 21-01-2021
+  notes:
+  - note: Adds core feature set.
+  - note: Adds `up` CLI.
+1.1.0:
+  date: 29-01-2021
+  notes:
+  - note: Adds usage of local docker registry to reduce data uploaded.
+  - note: 'Adds `registry` CLI:'
+    children:
+    - note: start
+    - note: stop
+1.1.1:
+  date: 29-01-2021
+  notes:
+  - note: Makes imageName key of deployer.yml optional by defaulting to top-level
+      key value.
+2.0.0:
+  date: 21-02-2021
+  notes:
+  - note: Adds multi node swarm support.
+2.0.1:
+  date: 24-05-2021
+  notes:
+  - note: Adds a patch to support docker update on `docker port <containerName>`.
+2.0.2:
+  date: 14-06-2021
+  notes:
+  - note: Adds cosmiconfig to improve locating of deployer.yml by scanning parent
+      directories of cwd.
+2.1.0:
+  date: 27-08-2021
+  notes:
+  - note: Adds global config feature.
+    children:
+    - note: Adds name key
+  - note: 'Adds `config` CLI:'
+    children:
+    - note: Set
+    - note: Unset
+    - note: Reset
+  - note: Adds more descriptive error message when failing to parse deployer.yml.
+  - note: Adds checking for updates.
+  - note: Bugfixes and general improvements.
+  - note: Upgrade 'yargs' dependency to "17.1.1".
+  - note: Include node-fetch dependency.
+2.1.1:
+  date: 30-08-2021
+  notes:
+  - note: Improves logging by using multiple logging levels.
+  - note: Adds loglevel key in global config.
+  - note: Adds `-l` option for using a specific log level for command.
+  - note: Changes to `-q` flag.
+    children:
+    - note: Makes quiet flag global rather than specific to `up`.
+    - note: Changes behaviour to set log-level to `FATAL`.
+2.1.2:
+  date: 31-08-2021
+  notes:
+  - note: Creates `~/.deployer/` directory to store the config.
+  - note: Moves config.json to `~/.deployer/config.json`.
+2.1.3:
+  date: 02-09-2021
+  notes:
+  - note: Logs patch notes of available updates.
