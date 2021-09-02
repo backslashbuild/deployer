@@ -1,4 +1,20 @@
-<h1 style="font-size:40px"> Deployer v2.1.3</h1>
+<br>
+<p align="center">
+  <img width="450" src="https://raw.githubusercontent.com/backslashbuild/deployer/master/deployer_logo.png">
+</p>
+<h2 style="font-size:20px" align="center"> Deploy locally built docker images to remote docker swarm</h2>
+<br>
+<br>
+
+[![package][package-version]][package-url]
+
+<!-- <p align="center">
+  <a href="https://github.com/backslashbuild/deployer">
+    <img src="https://img.shields.io/github/package-json/v/backslashbuild/deployer" alt="Deployer version." />
+  </a>
+</p> -->
+
+# Description
 
 Deployer is an npm package dealing with replacing the image of a service in a remote docker swarm using local docker images. This is achieved by running a local docker registry. The local machine builds and pushes the images to that registry and the remote machine pulls and deploys them using an ssh reverse tunnel.
 
@@ -186,3 +202,6 @@ key - The key of the config to be reset
 #### Description
 
 Resets the deployer config to default values.
+
+[package-url]: https://github.com/backslashbuild/deployer
+[package-version]: https://img.shields.io/github/package-json/v/backslashbuild/deployer
