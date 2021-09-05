@@ -148,19 +148,18 @@ When deployer updates the image of a service, it also sets a label on the servic
 
 ```json
 {
-  "date": "2021-09-05T21:31:32.000Z", // "YYYY-MM-DDTHH:MM:SS.MMMZ
+  "date": "2021-09-05T21:31:32.000Z",
   "deployerVersion": "2.2.0",
-  "name": "deployer", // from deployer config. See deployer config CLI
-  "computerUsername": "Vasilis", // User logged on the computer when the command was ran
-  "deviceName": "LAPTOP-SD9J03UG", // as seen in PC's information
-  // OS details
+  "name": "deployer",
+  "computerUsername": "Vasilis",
+  "deviceName": "LAPTOP-SD9J03UG",
   "operatingSystem": {
     "type": "Windows_NT",
     "platform": "win32",
     "architecture": "x64",
     "release": "10.0.19043"
   },
-  "image": "deployer/hello-world1:latest" // image used to update the service during `up` command
+  "image": "deployer/hello-world1:latest"
 }
 ```
 
