@@ -2,7 +2,8 @@ const fetch = require("node-fetch");
 const localPackageJson = require("../../../package.json");
 const { logger, formatter } = require("../../utils/textUtils");
 const YAML = require("yamljs");
-
+const fs = require("fs");
+const path = require("path");
 /**
  * @description Fetches the patch-notes.yml of the master branch from Deployer's repository and parses its contents into an object.
  * @returns {object} Parsed patch-notes.yml from remote.
@@ -78,6 +79,18 @@ async function printUpdates(localVersion, printFunc) {
   );
   updates.forEach((version) => {
     printPatchNotes(version, remotePatchNotes, printFunc);
+  });
+}
+
+/**
+ * To be used during development to preview patch notes.
+ */
+function previewPatchnotes() {
+  let localPatchNotes = YAML.parse(
+    fs.readFileSync(path.join(__dirname, "../../../patch-notes.yml"), "utf8")
+  );
+  Object.keys(localPatchNotes).forEach((version) => {
+    printPatchNotes(version, localPatchNotes, logger.info);
   });
 }
 

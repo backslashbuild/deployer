@@ -64,3 +64,8 @@
   date: 02-09-2021
   notes:
   - note: Logs patch notes of available updates.
+2.2.0:
+  date: 05-09-2021
+  notes: 
+    - note: Upon deploying using `deployer up` a label is added to the targetted service containing deployment metadata.
+    - note: Adds `inspect` CLI. This command fetches the metadata stored in the services and logs them.

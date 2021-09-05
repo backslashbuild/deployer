@@ -62,11 +62,13 @@ yargs
   .help()
   .group(["q", "l", "help", "version"], "Global options:")
   .fail((msg, e, yargs) => {
-    logger.fatal("");
-    logger.fatal(msg);
+    // The below should've been <msg> but it only does when the exception is thrown within the builder of the command,
+    // doesn't work for handler. The the regex is a workaround.
+    logger.fatal(formatter.error(/Error: (.*)/g.exec(e.toString())[1]));
     logger.debug(e);
-    logger.info("");
-    yargs.showHelp((s) => logger.info(s));
+    logger.info(
+      "\nFor help with the command run it with the `--help` flag, or visit the documentation."
+    );
     exit(1);
   })
   .wrap(90).argv;
