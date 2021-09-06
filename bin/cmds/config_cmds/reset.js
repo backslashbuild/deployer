@@ -1,7 +1,6 @@
 const { logger, formatter } = require("../../utils/textUtils");
 const fs = require("fs");
-const defaultConfig = require("../../res/defaultConfig.json");
-const { deployerConfigFilePath } = require("../../utils/configUtils");
+const { deployerConfigFilePath, defaultConfig } = require("../../utils/configUtils");
 
 exports.command = "reset";
 exports.desc = "Reverts all config keys to default values.";

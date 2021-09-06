@@ -149,9 +149,13 @@ function isUpdateRequired({ localVersion, remoteVersion }) {
  * at install directory and fetching the lastest deployer version from remote deployer repositry and asserting whether
  * an upgrade is required. If an update is required a message will be printed.
  *
+ * @param {Object} argv - Argv object supplied from yargs
  * @returns {Promise<void>} An awaitable promise when the check for updates is done.
  */
-async function checkForUpdatesMiddleware() {
+async function checkForUpdatesMiddleware(argv) {
+  if (!argv.deployerConfig.checkForUpdates) {
+    return;
+  }
   let remotePackageJson;
   try {
     remotePackageJson = await getRemotePackageJson();

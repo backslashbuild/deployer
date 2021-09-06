@@ -15,7 +15,7 @@ function runRegistry(port) {
     logger.fatal(formatter.error("Failed to run local registry."));
     exit(1);
   }
-  logger.info(formatter.success(`Registry listening at port ${formatter.info(port)} ...`));
+  logger.info(formatter.success(`Registry listening at port ${formatter.info(port)}...`));
 }
 
 /**
@@ -33,7 +33,7 @@ function stopRegistry() {
     logger.fatal(formatter.error("Failed to remove local registry container."));
     exit(1);
   }
-  logger.info(formatter.success("Local registry stopped succesffully ..."));
+  logger.info(formatter.success("Local registry stopped successfully..."));
 }
 
 module.exports = { runRegistry, stopRegistry };

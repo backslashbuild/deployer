@@ -1,5 +1,4 @@
 const shell = require("shelljs");
-const { exit } = require("yargs");
 const os = require("os");
 const {
   getContainerPort,
@@ -35,8 +34,8 @@ function getRegistryPort() {
   const srcPort = getContainerPort("deployer-registry");
   if (srcPort === -1) {
     throw new Error(
-      `${formatter.error(`Is the deployer registry running? Try running:`)}\n${formatter.info(
-        `deployer registry start`
+      `Failed to get registry port. Is the deployer registry running? Try running:\n${formatter.info(
+        "deployer registry start"
       )}`
     );
   }
@@ -80,9 +79,11 @@ async function createTunnel(sshHost, srcPort, serviceName) {
       try {
         resolve(rx.exec(data.toString())[1]);
       } catch (e) {
-        reject(formatter.error(data.toString()));
+        reject(data.toString().trim());
       }
     });
+  }).catch((e) => {
+    throw new Error(e);
   });
 
   logger.info(
@@ -111,7 +112,6 @@ function buildStage(build, targetCWD = undefined) {
 
   const buildResult = shell.exec(build, { silent: logger.isLevelSilent(logger.loglevels.INFO) });
   if (buildResult.code !== 0) {
-    logger.info(formatter.error(buildResult.stderr));
     throw new Error("Failed to build the image using the command provided in the config.");
   }
 
@@ -131,9 +131,15 @@ async function tagAndPushStage(imageName, srcPort) {
     )} ...`
   );
 
-  shell.exec(`docker image tag ${imageName} localhost:${srcPort}/${imageName}`, {
-    silent: logger.isLevelSilent(logger.loglevels.INFO),
+  const tagResult = shell.exec(`docker image tag ${imageName} localhost:${srcPort}/${imageName}`, {
+    silent: true,
   });
+  if (tagResult.code !== 0) {
+    logger.error(formatter.error(tagResult.stderr));
+    throw new Error(
+      `Failed to tag ${imageName} with localhost:${srcPort}/${imageName}. Make sure that the correct build command is used for the image.`
+    );
+  }
 
   logger.info(formatter.success(`Tag successful.`));
   logger.info("");
@@ -146,7 +152,7 @@ async function tagAndPushStage(imageName, srcPort) {
     `localhost:${srcPort}/${imageName}`,
   ]);
   if (pushExitCode !== 0) {
-    throw new Error(formatter.error(`Failed to push image to local deployer-registry.`));
+    throw new Error(`Failed to push image to local deployer-registry.`);
   }
 
   logger.info(formatter.success(`Pushing completed.`));
@@ -174,7 +180,7 @@ async function pullAndTagStage(imageName, sshHost, destPort, tagName) {
     `localhost:${destPort}/${imageName}`,
   ]);
   if (pullResultCode !== 0) {
-    throw new Error(formatter.error(`Failed to pull image at remote host.`));
+    throw new Error(`Failed to pull image at remote host.`);
   }
 
   logger.info(formatter.success(`Pull completed.`));
@@ -328,7 +334,7 @@ async function deployImage(imageName, serviceName, sshHost, deployerConfig) {
     serviceName,
   ]);
   if (deployResultCode !== 0) {
-    throw new Error(formatter.error(`Failed to deploy image in the remote swarm.`));
+    throw new Error(`Failed to deploy image in the remote swarm.`);
   }
 
   logger.info(formatter.success(`${serviceName} updated successfully.`));
@@ -362,8 +368,7 @@ async function deploy(sshHost, config, targetCWD, deployerConfig) {
 
     await deployImage(taggedImage, serviceName, sshHost, deployerConfig);
   } catch (error) {
-    logger.fatal(error);
-    exit(1);
+    throw error;
   } finally {
     if (tunnelProcessRef != null) {
       tunnelProcessRef.kill();

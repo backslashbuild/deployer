@@ -24,7 +24,7 @@ function isLevelSilent(loglevel) {
  * @returns {boolean} True if the loglevel of the command is loglevels.DEBUG (5) or higher.
  */
 function isDebugMode() {
-  return !isLevelSilent(loglevels.DEBUG);
+  return !isLevelSilent(loglevels.ALL);
 }
 
 /**

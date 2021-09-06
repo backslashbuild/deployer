@@ -37,26 +37,21 @@ exports.builder = (yargs) => {
               fs.accessSync(argv.f, fs.R_OK);
               return true;
             } catch (e2) {
-              throw new Error(
-                formatter.error(`Argument check failed: ${argv.f} is not a readable file.`)
-              );
+              throw new Error(`Argument check failed: ${argv.f} is not a readable file.`);
             }
           }
         }
-        throw new Error(
-          formatter.error(`Argument check failed: ${argv.f} is not a readable file or not found.`)
-        );
+        throw new Error(`Argument check failed: ${argv.f} is not a readable file or not found.`);
       }
     });
 };
-exports.handler = function (argv) {
+exports.handler = async function (argv) {
   const serviceArray = [].concat(argv.service).concat(argv.services);
   const configObject = validateConfig(argv.file);
 
   if (serviceArray.length == 1) {
     if (!configObject.services[argv.service]) {
-      logger.fatal(formatter.error(`Config file does not contain service: "${argv.service}".`));
-      exit(1);
+      throw new Error(`Config file does not contain service: "${argv.service}".`);
     }
 
     //If imageName is not defined in the config use the service key as imageName
@@ -65,14 +60,20 @@ exports.handler = function (argv) {
       serviceConfig.imageName = argv.service;
     }
 
-    deploy(argv.host, serviceConfig, argv.targetCWD, argv.deployerConfig);
+    await deploy(argv.host, serviceConfig, argv.targetCWD, argv.deployerConfig);
   } else {
     // Calling deployer as a child means that every service deploy will use its own tunnel.
     // Potential improvement is to create the tunnel here and pass it as a parameter so that a single tunnel shared by all processes.
     const workers = [];
     serviceArray.forEach((s) => {
       args = [`up`, `${argv.host}`, `${s}`, `-f`, `${argv.file}`];
-      argv.quiet ? args.push("--quiet") : args;
+      if (argv.q) {
+        args.push(`-q`);
+      }
+      if (argv.l) {
+        args.push("-l");
+        args.push(argv["l"]);
+      }
       const worker = spawnWorker(`deployer`, args, s);
       workers.push(worker);
     });
@@ -86,34 +87,21 @@ exports.handler = function (argv) {
  */
 function validateConfig(configFilePath) {
   try {
-    const config = YAML.parse(fs.readFileSync(configFilePath, "utf8"));
-    if (!config.services) {
-      logger.fatal(formatter.error(`Config file must contain "services" top level key.`));
-      exit(1);
-    } else {
-      Object.keys(config.services).forEach((k) => {
-        if (k === "all") {
-          logger.fatal(
-            formatter.error(
-              `Services cannot contain "all" key. Key reserved for deploying all images.`
-            )
-          );
-          exit(1);
-        }
-        if (!(config.services[k].serviceName && config.services[k].build)) {
-          logger.fatal(
-            formatter.error(
-              `Missing key components in service ${k}. Each service must contain "serviceName" and "build" keys. "imageName" is optional and uses the service key as default.`
-            )
-          );
-          exit(1);
-        }
-      });
-      return config;
-    }
+    var config = YAML.parse(fs.readFileSync(configFilePath, "utf8"));
   } catch (e) {
-    logger.fatal(formatter.error("Exception thrown while parsing config file."));
     logger.error(e);
-    exit(1);
+    throw new Error(`Exception thrown while parsing config file.`);
   }
+  if (!config.services) {
+    throw new Error(`Config file must contain "services" top level key.`);
+  }
+
+  Object.keys(config.services).forEach((key) => {
+    if (!(config.services[key].serviceName && config.services[key].build)) {
+      throw new Error(
+        `Missing key components in service ${key}. Each service must contain "serviceName" and "build" keys. "imageName" is optional and uses the service key as default.`
+      );
+    }
+  });
+  return config;
 }
