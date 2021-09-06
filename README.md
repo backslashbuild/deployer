@@ -142,7 +142,7 @@ key - The key of the config to be reset
 
 ### Description
 
-When deployer updates the image of a service, it also sets a label on the service with metadata delated to the deploy in a stringified JSON format. Running `docker inspect` prints the metadata stored in the service label.
+When deployer updates the image of a service, it also sets a label on the service with metadata related to the deploy in a stringified JSON format. Running `deployer inspect` prints the metadata stored in the service label.
 
 ### Deployer label contents
 
