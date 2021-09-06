@@ -69,3 +69,8 @@
   notes: 
     - note: Upon deploying using `deployer up` a label is added to the targetted service containing deployment metadata.
     - note: Adds `inspect` CLI. This command fetches the metadata stored in the services and logs them.
+2.2.1:
+  date: 06-09-2021
+  notes: 
+    - note: Bugfix around error reporting from yargs.
+    

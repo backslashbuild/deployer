@@ -63,22 +63,31 @@ yargs
   .group(["q", "l", "help", "version"], "Global options:")
   .fail((msg, e, yargs) => {
     /* 
-      Yargs does not consistently put the error message into <msg> so we have to extract it from the error ourselves
-      `e` will look like this:  
-          
-      Error: <ERROR_MESSAGE>
-        stacktrace line 1
-        stacktrace line 2
+        Yargs does not consistently put the error message into <msg>. When that happens, we have to extract it from the error ourselves
+        `e` will look like this:  
+            
+        Error: <ERROR_MESSAGE>
+          stacktrace line 1
+          stacktrace line 2
+  
+        e.toString() returns "Error: <ERROR_MESSAGE>"
+      */
 
-      e.toString() returns "Error: <ERROR_MESSAGE>"
-    */
-    const errorMessage = /Error: (.*)/g.exec(e.toString())[1];
-
-    logger.fatal(formatter.error(errorMessage));
-    logger.debug(e);
-    logger.info(
-      "\nFor help with the command run it with the `--help` flag, or visit the documentation."
-    );
+    if (msg) {
+      const errorMessage = msg;
+      logger.fatal(formatter.error(errorMessage));
+      logger.debug(e);
+      yargs.showHelp();
+    } else if (e) {
+      const errorMessage = /Error: (.*)/g.exec(e.toString())[1];
+      logger.fatal(formatter.error(errorMessage));
+      logger.debug(e);
+      logger.info(
+        "\nFor help with the command run it with the `--help` flag, or visit the documentation."
+      );
+    } else {
+      yargs.showHelp();
+    }
     exit(1);
   })
   .wrap(90).argv;
