@@ -94,14 +94,16 @@ Deployer uses global configuration, stored at `~/.deployer/config.json`. Deploye
 ```json
 {
   "name": "deployer",
-  "loglevel": "INFO"
+  "logLevel": "INFO",
+  "checkForUpdates": true
 }
 ```
 
 ### Dictionary
 
 - "**name**": A string that may contain alphanumeric characters and "-" which is used when deployer tags images. It is advised that a meaningful `name` is set to enable communication in a team environment.
-- "**loglevel**" A numerical value between 0-7 or a string representing a log level. Available options are: `OFF`, `FATAL`, `ERROR`, `WARNING`, `INFO`, `DEBUG`, `TRACE`, `ALL`.
+- "**logLevel**" A numerical value between 0-7 or a string representing a log level. Available options are: `OFF`, `FATAL`, `ERROR`, `WARNING`, `INFO`, `DEBUG`, `TRACE`, `ALL`.
+- "**checkForUpdates**" A flag to choose whether deployer should check for updates.
 
 ### Commands
 
