@@ -1,4 +1,5 @@
 const shell = require("shelljs");
+const logger = require("./textUtils/logger");
 
 /**
  * @description Gets the port on which the deployer doker registry is running.
@@ -17,9 +18,9 @@ function getContainerPort(containerName) {
 }
 
 /**
- * @description Gets the port on which the deployer doker registry is running.
- * @param {string} serviceName - the name of the service whose port is to be returned.
- * @param {string} sshHost - the remote host containing the service.
+ * @description Gets the port on which the deployer docker registry is running.
+ * @param {string} serviceName - The name of the service whose port is to be returned.
+ * @param {string} sshHost - The remote host containing the service.
  * @returns {string} The port on which deployer-registry is exposed at.
  */
 function getServicePort(serviceName, sshHost) {
@@ -31,6 +32,42 @@ function getServicePort(serviceName, sshHost) {
   }
   const jsonResult = JSON.parse(result.stdout);
   return jsonResult[0].Spec.EndpointSpec.Ports[0].PublishedPort;
+}
+
+/**
+ * @description Gets the labels of a remote service.
+ * @param {string} serviceName - The name of the service whose labels are to be returned.
+ * @param {string} sshHost - The remote host containing the service.
+ * @returns {string|object} The labels of the service as a json object. If it fails to get the labels returns the error message instead.
+ */
+function getServiceLabels(serviceName, sshHost) {
+  const result = shell.exec(`docker -H ssh://${sshHost} service inspect ${serviceName}`, {
+    silent: true,
+  });
+  if (result.code !== 0) {
+    return result.stderr;
+  }
+  const jsonResult = JSON.parse(result.stdout);
+  return jsonResult[0].Spec.Labels;
+}
+
+/**
+ * @description Gets the current image of a remote service.
+ * @param {string} serviceName - The name of the service whose labels are to be returned.
+ * @param {string} sshHost - The remote host containing the service.
+ * @returns {string} The image of the service. If it fails to get the labels returns the error message instead.
+ */
+function getServiceImage(serviceName, sshHost) {
+  const result = shell.exec(
+    `docker -H ssh://${sshHost} service inspect ${serviceName} --format {{.Spec.TaskTemplate.ContainerSpec.Image}}`,
+    {
+      silent: true,
+    }
+  );
+  if (result.code !== 0) {
+    return result.stderr;
+  }
+  return result.stdout.trim();
 }
 
 function getAllPortsExposedInSwarm(sshHost) {
@@ -78,5 +115,7 @@ module.exports = {
   getContainerPort,
   getNumberOfNodes,
   getServicePort,
+  getServiceLabels,
+  getServiceImage,
   getAllPortsExposedInSwarm,
 };

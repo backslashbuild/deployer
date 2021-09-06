@@ -1,5 +1,6 @@
 const shell = require("shelljs");
 const { exit } = require("yargs");
+const os = require("os");
 const {
   getContainerPort,
   getNumberOfNodes,
@@ -8,6 +9,7 @@ const {
 } = require("../utils/dockerUtils");
 const { logger, formatter } = require("../utils/textUtils");
 const { awaitableSpawnProcess } = require("../utils/workerUtils");
+const { deployerVersion } = require("../utils/configUtils");
 
 /**
  * @description Prints the information given from command arguments.
@@ -275,12 +277,43 @@ async function handleMultiNodeDeploy(imageName, sshHost, tagName) {
 }
 
 /**
+ * @description Generates a stringified metadata object for the
+ * @param {Object} deployerConfig - Deployer configuration values.
+ * @param {string} imageName - the image used to update the existing service.
+ * @returns
+ */
+function getDeployerLabel(deployerConfig, imageName) {
+  const date = new Date(new Date().toUTCString());
+  const name = deployerConfig.name;
+  const computerUsername = os.userInfo().username;
+  const deviceName = os.hostname();
+  const operatingSystem = {
+    type: os.type(),
+    platform: os.platform(),
+    architecture: os.arch(),
+    release: os.release(),
+  };
+  const deployerLabelJson = {
+    date,
+    deployerVersion,
+    name,
+    computerUsername,
+    deviceName,
+    operatingSystem,
+    image: imageName,
+  };
+
+  return JSON.stringify(deployerLabelJson);
+}
+
+/**
  * @description Updates the image of the service on the remote on the swarm.
  * @param {string} imageName - the image used to update the existing service.
  * @param {string} serviceName - the name of the service to be updated.
  * @param {string} sshHost - the ssh host that contains the swarm which contains the service.
+ * @param {Object} deployerConfig - Deployer configuration values.
  */
-async function deployImage(imageName, serviceName, sshHost) {
+async function deployImage(imageName, serviceName, sshHost, deployerConfig) {
   logger.info(`Deploying the image...`);
   const deployResultCode = await awaitableSpawnProcess(`docker`, [
     `-H`,
@@ -290,6 +323,8 @@ async function deployImage(imageName, serviceName, sshHost) {
     `--force`,
     `--image`,
     imageName,
+    `--label-add`,
+    `deployer=${getDeployerLabel(deployerConfig, imageName)}`,
     serviceName,
   ]);
   if (deployResultCode !== 0) {
@@ -305,7 +340,7 @@ async function deployImage(imageName, serviceName, sshHost) {
  * @param {string} sshHost - The remote host to deploy the image to.
  * @param {Object} config - JSON containing the information from the config file.
  * @param {string} targetCWD - CWD for build commands.
- * @param {string} deployerConfig - Deployer configuration values.
+ * @param {Object} deployerConfig - Deployer configuration values.
  */
 async function deploy(sshHost, config, targetCWD, deployerConfig) {
   const { serviceName, imageName, build } = config;
@@ -325,7 +360,7 @@ async function deploy(sshHost, config, targetCWD, deployerConfig) {
       taggedImage = await handleMultiNodeDeploy(imageName, sshHost, tagName);
     }
 
-    await deployImage(taggedImage, serviceName, sshHost);
+    await deployImage(taggedImage, serviceName, sshHost, deployerConfig);
   } catch (error) {
     logger.fatal(error);
     exit(1);

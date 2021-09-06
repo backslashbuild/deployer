@@ -6,13 +6,7 @@
 <br>
 <br>
 
-[![package][package-version]][package-url]
-
-<!-- <p align="center">
-  <a href="https://github.com/backslashbuild/deployer">
-    <img src="https://img.shields.io/github/package-json/v/backslashbuild/deployer" alt="Deployer version." />
-  </a>
-</p> -->
+[![package-version][package-version-img]][package-version-url]
 
 # Description
 
@@ -66,14 +60,15 @@ services:
 
 ## Commands
 
+- [Config](#config)
+  - [Reset](#config-reset)
+  - [Set](#config-set)
+  - [Unset](#config-unset)
+- [Inspect](#inspect)
 - [Registry](#registry)
   - [Start](#registry-start)
   - [Stop](#registry-stop)
 - [Up](#up)
-- [Config](#config)
-  - [Set](#config-set)
-  - [Unset](#config-unset)
-  - [Reset](#config-reset)
 
 ## Global options
 
@@ -85,6 +80,96 @@ services:
     --help      - Show help.
     --version   - Show version number.
 ```
+
+---
+
+## <a name="config"></a>Config
+
+### Description
+
+Deployer uses global configuration, stored at `~/.deployer/config.json`. Deployer comes with a default set of values configuration all of which can be changed using `deployer config set` and can be reset to default using `deployer config unset`. The config can be reset to default using `deployer config reset`.
+
+### Default config file
+
+```json
+{
+  "name": "deployer",
+  "loglevel": "INFO"
+}
+```
+
+### Dictionary
+
+- "**name**": A string that may contain alphanumeric characters and "-" which is used when deployer tags images. It is advised that a meaningful `name` is set to enable communication in a team environment.
+- "**loglevel**" A numerical value between 0-7 or a string representing a log level. Available options are: `OFF`, `FATAL`, `ERROR`, `WARNING`, `INFO`, `DEBUG`, `TRACE`, `ALL`.
+
+### Commands
+
+### <a name="config-reset"></a>`deployer config reset`
+
+#### Description
+
+Resets the deployer config to default values.
+
+### <a name="config-set"></a>`deployer config set <key> <value>`
+
+#### Description
+
+Updates the deployer config `<key>` to provided `<value>`.
+
+#### Arguments
+
+```
+key   - The key of the config to be updated
+value - The value to be stored in the key
+```
+
+### <a name="config-unset"></a>`deployer config unset <key>`
+
+#### Description
+
+Resets the deployer config `<key>`.
+
+#### Arguments
+
+```
+key - The key of the config to be reset
+```
+
+---
+
+## <a name="inspect"></a>Inspect
+
+### Description
+
+When deployer updates the image of a service, it also sets a label on the service with metadata related to the deploy in a stringified JSON format. Running `deployer inspect` prints the metadata stored in the service label.
+
+### Deployer label contents
+
+```json
+{
+  "date": "2021-09-05T21:31:32.000Z",
+  "deployerVersion": "2.2.0",
+  "name": "deployer",
+  "computerUsername": "Vasilis",
+  "deviceName": "LAPTOP-SD9J03UG",
+  "operatingSystem": {
+    "type": "Windows_NT",
+    "platform": "win32",
+    "architecture": "x64",
+    "release": "10.0.19043"
+  },
+  "image": "deployer/hello-world1:latest"
+}
+```
+
+### Commands
+
+### `deployer inspect <host> <service>`
+
+#### Description
+
+Inspects deployer metadata of remote service.
 
 ---
 
@@ -150,58 +235,5 @@ services - Additional deployer.yaml keys to be deployed in parallel
 
 ---
 
-## <a name="config"></a>Config
-
-### Description
-
-Deployer uses global configuration, stored at `~/.deployer/config.json`. Deployer comes with a default set of values configuration all of which can be changed using `deployer config set` and can be reset to default using `deployer config unset`. The config can be reset to default using `deployer config reset`.
-
-### Default config file
-
-```json
-{
-  "name": "deployer",
-  "loglevel": "INFO"
-}
-```
-
-### Dictionary
-
-- "**name**": A string that may contain alphanumeric characters and "-" which is used when deployer tags images. It is advised that a meaningful `name` is set to enable communication in a team environment.
-- "**loglevel**" A numerical value between 0-7 or a string representing a log level. Available options are: `OFF`, `FATAL`, `ERROR`, `WARNING`, `INFO`, `DEBUG`, `TRACE`, `ALL`.
-
-### Commands
-
-### <a name="config-set"></a>`deployer config set <key> <value>`
-
-#### Description
-
-Updates the deployer config `<key>` to provided `<value>`.
-
-#### Arguments
-
-```
-key   - The key of the config to be updated
-value - The value to be stored in the key
-```
-
-### <a name="config-unset"></a>`deployer config unset <key>`
-
-#### Description
-
-Resets the deployer config `<key>`.
-
-#### Arguments
-
-```
-key - The key of the config to be reset
-```
-
-### <a name="config-reset"></a>`deployer config reset`
-
-#### Description
-
-Resets the deployer config to default values.
-
-[package-url]: https://github.com/backslashbuild/deployer
-[package-version]: https://img.shields.io/github/package-json/v/backslashbuild/deployer
+[package-version-url]: https://github.com/backslashbuild/deployer
+[package-version-img]: https://img.shields.io/github/package-json/v/backslashbuild/deployer

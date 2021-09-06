@@ -1,5 +1,6 @@
 const os = require("os");
 const path = require("path");
+const packageJson = require("../../package.json");
 
 const deployerDirectory = path.resolve(os.homedir(), ".deployer");
 const configFileName = "config.json";
@@ -9,4 +10,5 @@ module.exports = {
   deployerDirectory,
   configFileName,
   deployerConfigFilePath,
+  deployerVersion: packageJson.version,
 };

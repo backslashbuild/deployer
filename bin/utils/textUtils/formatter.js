@@ -46,6 +46,15 @@ function warning(text) {
 }
 
 /**
+ * @description Colours the text magenta.
+ * @param {string} text - Text to be coloured.
+ * @returns {string} Magenta text.
+ */
+function debug(text) {
+  return colors.magenta(text);
+}
+
+/**
  * @description Encloses given text in a box.
  * @param {string} text - Text to be enclosed in a box.
  * @returns {string} Text enclosed in a box.
@@ -84,6 +93,7 @@ const formatter = {
   error,
   bold,
   warning,
+  debug,
   box,
 };
 
