@@ -2,44 +2,44 @@ const util = require("util");
 const formatter = require("./formatter");
 
 /**
- * Enum for loglevel values.
+ * Enum for logLevel values.
  * @enum {number}
  */
-var loglevels = { OFF: 0, FATAL: 1, ERROR: 2, WARN: 3, INFO: 4, DEBUG: 5, TRACE: 6, ALL: 7 };
+var logLevels = { OFF: 0, FATAL: 1, ERROR: 2, WARN: 3, INFO: 4, DEBUG: 5, TRACE: 6, ALL: 7 };
 
 /**
- * @description Asserts whether given loglevel should or should not log.
- * @param {loglevels} loglevel - The loglevel to assert whether it should be logging or not.
+ * @description Asserts whether given logLevel should or should not log.
+ * @param {logLevels} logLevel - The logLevel to assert whether it should be logging or not.
  * @returns true if given log level should not log.
  */
-function isLevelSilent(loglevel) {
+function isLevelSilent(logLevel) {
   if (!process.env.LOG_LEVEL) {
-    return loglevels.FATAL < loglevel;
+    return logLevels.FATAL < logLevel;
   }
-  return process.env.LOG_LEVEL < loglevel;
+  return process.env.LOG_LEVEL < logLevel;
 }
 
 /**
  * @description Asserts whether the command is running in debug mode or not.
- * @returns {boolean} True if the loglevel of the command is loglevels.DEBUG (5) or higher.
+ * @returns {boolean} True if the logLevel of the command is logLevels.DEBUG (5) or higher.
  */
 function isDebugMode() {
-  return !isLevelSilent(loglevels.ALL);
+  return !isLevelSilent(logLevels.ALL);
 }
 
 /**
- * @description Takes a list of strings and logs them using the <printFunc> if the <loglevel> provided is not silenced.
- *              For flags higher or equal to loglevels.DEBUG (5) additional formatting is added.
+ * @description Takes a list of strings and logs them using the <printFunc> if the <logLevel> provided is not silenced.
+ *              For flags higher or equal to logLevels.DEBUG (5) additional formatting is added.
  * @param {Array<string>} textList - The array of strings to be logged
- * @param {loglevels} loglevel - The loglevel at which the text should be printed.
+ * @param {logLevels} logLevel - The logLevel at which the text should be printed.
  * @param {(string)=>void} printFunc
  */
-function log(textList, loglevel, printFunc) {
-  if (!isLevelSilent(loglevel)) {
+function log(textList, logLevel, printFunc) {
+  if (!isLevelSilent(logLevel)) {
     if (isDebugMode()) {
       printFunc(
         formatter.debug(
-          `[${Object.keys(loglevels).find((level) => loglevels[level] === loglevel)}]`
+          `[${Object.keys(logLevels).find((level) => logLevels[level] === logLevel)}]`
         )
       );
     }
@@ -55,7 +55,7 @@ function log(textList, loglevel, printFunc) {
  * @param {Array<string>} textList - Text to be logged.
  */
 function fatal(...textList) {
-  log(textList, loglevels.FATAL, console.error);
+  log(textList, logLevels.FATAL, console.error);
 }
 
 /**
@@ -63,7 +63,7 @@ function fatal(...textList) {
  * @param {Array<string>} textList - Text to be logged.
  */
 function error(...textList) {
-  log(textList, loglevels.ERROR, console.error);
+  log(textList, logLevels.ERROR, console.error);
 }
 
 /**
@@ -71,7 +71,7 @@ function error(...textList) {
  * @param {Array<string>} textList - Text to be logged.
  */
 function warn(...textList) {
-  log(textList, loglevels.WARN, console.error);
+  log(textList, logLevels.WARN, console.error);
 }
 
 /**
@@ -79,7 +79,7 @@ function warn(...textList) {
  * @param {Array<string>} textList - Text to be logged.
  */
 function info(...textList) {
-  log(textList, loglevels.INFO, console.log);
+  log(textList, logLevels.INFO, console.log);
 }
 
 /**
@@ -87,7 +87,7 @@ function info(...textList) {
  * @param {Array<string>} textList - Text to be logged.
  */
 function debug(...textList) {
-  log(textList, loglevels.DEBUG, console.log);
+  log(textList, logLevels.DEBUG, console.log);
 }
 
 /**
@@ -95,7 +95,7 @@ function debug(...textList) {
  * @param {Array<string>} textList - Text to be logged.
  */
 function trace(...textList) {
-  log(textList, loglevels.TRACE, console.log);
+  log(textList, logLevels.TRACE, console.log);
 }
 
 const logger = {
@@ -106,7 +106,7 @@ const logger = {
   debug,
   trace,
   isLevelSilent,
-  loglevels,
+  logLevels,
 };
 
 module.exports = logger;

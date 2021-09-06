@@ -24,25 +24,25 @@ function convertInputToBoolean(input) {
  * @description Receives <input> and converts it to log level key.
  *
  * @param {*} input - Input as received in argv.
- * @returns {string} Log level key from logger.loglevels.
+ * @returns {string} Log level key from logger.logLevels.
  * @throws When input cannot be parsed to log level.
  */
 function convertInputToLogLevel(input) {
-  //if loglevel is given as a number, clamp it to accepted range and match correct loglevel name
+  //if logLevel is given as a number, clamp it to accepted range and match correct logLevel name
   if (typeof input === "number") {
-    if (input < logger.loglevels.OFF) {
-      return logger.loglevels.OFF;
-    } else if (input > logger.loglevels.ALL) {
-      return logger.loglevels.ALL;
+    if (input < logger.logLevels.OFF) {
+      return logger.logLevels.OFF;
+    } else if (input > logger.logLevels.ALL) {
+      return logger.logLevels.ALL;
     }
-    return Object.keys(logger.loglevels).find((level) => logger.loglevels[level] === input);
+    return Object.keys(logger.logLevels).find((level) => logger.logLevels[level] === input);
   }
-  //if loglevel is given as a name, format it correclty to check if it is a valid loglevel name
+  //if logLevel is given as a name, format it correclty to check if it is a valid logLevel name
   else {
-    if (!Object.keys(logger.loglevels).includes(input.toString().toUpperCase())) {
+    if (!Object.keys(logger.logLevels).includes(input.toString().toUpperCase())) {
       throw new Error(
         `Log level can only be between 0-7 or one of the option: ${Object.keys(
-          logger.loglevels
+          logger.logLevels
         ).join(", ")}.`
       );
     } else {

@@ -110,7 +110,7 @@ function buildStage(build, targetCWD = undefined) {
     shell.pushd("-q", targetCWD);
   }
 
-  const buildResult = shell.exec(build, { silent: logger.isLevelSilent(logger.loglevels.INFO) });
+  const buildResult = shell.exec(build, { silent: logger.isLevelSilent(logger.logLevels.INFO) });
   if (buildResult.code !== 0) {
     throw new Error("Failed to build the image using the command provided in the config.");
   }
@@ -190,7 +190,7 @@ async function pullAndTagStage(imageName, sshHost, destPort, tagName) {
   shell.exec(
     `docker -H ssh://${sshHost} image tag localhost:${destPort}/${imageName} ${tagName}/${imageName}:latest`,
     {
-      silent: logger.isLevelSilent(logger.loglevels.INFO),
+      silent: logger.isLevelSilent(logger.logLevels.INFO),
     }
   );
   logger.info(formatter.success(`Tag completed.`));

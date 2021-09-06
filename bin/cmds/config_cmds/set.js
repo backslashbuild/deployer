@@ -15,7 +15,7 @@ exports.builder = (yargs) => {
     const key = convertInputToDeployerConfigKey(argv.key);
 
     //Coerce user input to correct config
-    switch (key.toLowerCase()) {
+    switch (key) {
       case "name":
         var validCharset = /^[a-zA-Z0-9-]+$/;
         if (!validCharset.test(argv.value)) {
@@ -25,10 +25,10 @@ exports.builder = (yargs) => {
         }
         argv.value = argv.value.toLowerCase();
         break;
-      case "loglevel":
+      case "logLevel":
         argv.value = convertInputToLogLevel(argv.value);
         break;
-      case "checkforupdates":
+      case "checkForUpdates":
         argv.value = convertInputToBoolean(argv.value);
         break;
     }

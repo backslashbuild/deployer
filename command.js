@@ -5,7 +5,7 @@ const {
   checkForUpdatesMiddleware,
   loadDeployerConfigMiddleware,
 } = require("./bin/services/middleware");
-const setloglevelMiddleware = require("./bin/services/middleware/setloglevelMiddleware");
+const setLogLevelMiddleware = require("./bin/services/middleware/setLogLevelMiddleware");
 const { convertInputToLogLevel } = require("./bin/utils/inputUtils");
 const { logger, formatter } = require("./bin/utils/textUtils");
 
@@ -23,7 +23,7 @@ yargs
     alias: "log-level",
     describe:
       "Sets the log-level to provided level. Accepts numerical value between 0-7 or one of the choices.",
-    choices: Object.keys(logger.loglevels),
+    choices: Object.keys(logger.logLevels),
     coerce: (value) => {
       if (value) {
         return convertInputToLogLevel(value);
@@ -35,7 +35,7 @@ yargs
       loadDeployerConfigMiddleware(argv);
     },
     (argv, yargs) => {
-      setloglevelMiddleware(argv);
+      setLogLevelMiddleware(argv);
     },
     async (argv, yargs) => {
       await checkForUpdatesMiddleware(argv);
