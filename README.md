@@ -73,12 +73,13 @@ services:
 ## Global options
 
 ```
--q, --quiet     - Suppresses verbose output. Sets log-level to 1.
--l, --log-level - Sets the log-level to provided level. Accepts numerical value between
-                 0-7 or one of the choices.
-                 [choices: "OFF", "FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "ALL"]
-    --help      - Show help.
-    --version   - Show version number.
+-q, --quiet           Suppresses verbose output. Sets log-level to 1.
+-l, --log-level       Sets the log-level to provided level. Accepts numerical value between
+                      0-7 or one of the choices.
+                [choices: "OFF", "FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "ALL"]
+    --help            Show help.
+    --version         Show version number.
+    --check-updates   Sets whether the command should check for updates before executing.
 ```
 
 ---
