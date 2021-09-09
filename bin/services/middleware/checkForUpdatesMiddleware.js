@@ -153,9 +153,18 @@ function isUpdateRequired({ localVersion, remoteVersion }) {
  * @returns {Promise<void>} An awaitable promise when the check for updates is done.
  */
 async function checkForUpdatesMiddleware(argv) {
-  if (!argv.deployerConfig.checkForUpdates) {
-    return;
+  //flag should overwrite global config
+  if (typeof argv.checkUpdates === "boolean") {
+    if (!argv.checkUpdates) {
+      return;
+    }
+  } else {
+    if (!argv.deployerConfig.checkForUpdates) {
+      return;
+    }
   }
+
+  logger.fatal(formatter.warning("CHECK"));
   let remotePackageJson;
   try {
     remotePackageJson = await getRemotePackageJson();

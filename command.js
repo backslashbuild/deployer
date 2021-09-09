@@ -30,6 +30,10 @@ yargs
       }
     },
   })
+  .option("check-updates", {
+    describe: "Sets whether the command should check for updates before executing.",
+    type: "boolean",
+  })
   .middleware([
     (argv, yargs) => {
       loadDeployerConfigMiddleware(argv);
@@ -44,7 +48,7 @@ yargs
   .demandCommand()
   .commandDir("bin/cmds")
   .help()
-  .group(["q", "l", "help", "version"], "Global options:")
+  .group(["q", "l", "help", "version", "check-updates"], "Global options:")
   .fail((msg, e, yargs) => {
     /* 
         Yargs does not consistently put the error message into <msg>. When that happens, we have to extract it from the error ourselves
