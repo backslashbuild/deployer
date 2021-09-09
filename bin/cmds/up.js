@@ -69,11 +69,14 @@ exports.handler = async function (argv) {
       args = [`up`, `${argv.host}`, `${s}`, `-f`, `${argv.file}`];
       if (argv.q) {
         args.push(`-q`);
+        args.push(argv["q"]);
       }
       if (argv.l) {
         args.push("-l");
         args.push(argv["l"]);
       }
+      args.push(`--check-updates`);
+      args.push("false");
       const worker = spawnWorker(`deployer`, args, s);
       workers.push(worker);
     });
