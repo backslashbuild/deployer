@@ -36,7 +36,7 @@ function spawnWorker(command, args, name = "Cross-Spawn ChildProcess") {
  */
 async function awaitableSpawnProcess(command, args) {
   const worker = require("child_process").spawn(command, args, {
-    stdio: logger.isLevelSilent(logger.loglevels.INFO) ? "ignore" : "inherit",
+    stdio: logger.isLevelSilent(logger.logLevels.INFO) ? "ignore" : "inherit",
   });
   const exitCode = await new Promise((resolve, reject) => {
     worker.on("exit", (code) => {

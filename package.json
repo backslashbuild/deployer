@@ -1,6 +1,6 @@
 {
   "name": "deployer",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Builds specified docker image and deploys to remote host.",
   "repository": "https://github.com/backslashbuild/deployer",
   "main": "command.js",

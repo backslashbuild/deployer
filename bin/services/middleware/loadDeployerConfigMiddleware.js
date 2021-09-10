@@ -52,7 +52,16 @@ function loadDeployerConfigMiddleware(argv) {
         configKeysMissing = true;
       }
     });
-    if (configKeysMissing) {
+
+    //Find extra keys in deployerConfig and remove them
+    let extraConfigKeys = false;
+    Object.keys(deployerConfig).forEach((key) => {
+      if (!Object.keys(defaultDeployerConfig).includes(key)) {
+        deployerConfig[key] = undefined;
+        extraConfigKeys = true;
+      }
+    });
+    if (configKeysMissing || extraConfigKeys) {
       fs.writeFileSync(deployerConfigFilePath, JSON.stringify(deployerConfig));
     }
 

@@ -69,3 +69,18 @@
   notes: 
     - note: Upon deploying using `deployer up` a label is added to the targetted service containing deployment metadata.
     - note: Adds `inspect` CLI. This command fetches the metadata stored in the services and logs them.
+2.3.0:
+  date: 10-09-2021
+  notes: 
+  - note: "Feature: Adds `checkForUpdates` key in global config."
+    children: 
+    - note: Flag to choose whether deployer should check for updates.
+    - note: Can be set to `true` or `false` using `deploy config set checkForUpdates true`.
+    - note: Defaults to true.
+  - note: "Feature: Adds `--check-updates` global option. If set, overwrites the checkForUpdates global config value."
+  - note: "Fix: around error reporting from yargs."
+  - note: "Fix: Multi-line exception messages to be logged properly."
+  - note: "Fix: `-l` flag not working as expected when deploying multiple services."
+  - note: "Fix: Keys in global deployer config that do not exist in default config are deleted."
+  - note: "Fix: Deploying multiple images in parallel using `up` command no longer prints update message multiple times."
+    

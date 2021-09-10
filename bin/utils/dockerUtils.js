@@ -1,5 +1,4 @@
 const shell = require("shelljs");
-const logger = require("./textUtils/logger");
 
 /**
  * @description Gets the port on which the deployer doker registry is running.

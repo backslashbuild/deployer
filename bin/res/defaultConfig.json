@@ -1,4 +1,5 @@
 {
   "name": "deployer",
-  "loglevel": "INFO"
+  "logLevel": "INFO",
+  "checkForUpdates": true
 }

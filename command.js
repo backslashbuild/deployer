@@ -5,7 +5,8 @@ const {
   checkForUpdatesMiddleware,
   loadDeployerConfigMiddleware,
 } = require("./bin/services/middleware");
-const setloglevelMiddleware = require("./bin/services/middleware/setloglevelMiddleware");
+const setLogLevelMiddleware = require("./bin/services/middleware/setLogLevelMiddleware");
+const { convertInputToLogLevel } = require("./bin/utils/inputUtils");
 const { logger, formatter } = require("./bin/utils/textUtils");
 
 /**
@@ -22,63 +23,59 @@ yargs
     alias: "log-level",
     describe:
       "Sets the log-level to provided level. Accepts numerical value between 0-7 or one of the choices.",
-    choices: Object.keys(logger.loglevels),
+    choices: Object.keys(logger.logLevels),
     coerce: (value) => {
-      //if loglevel is given as a number, clamp it to accepted range and match correct log-level name
-      if (typeof value === "number") {
-        if (value < logger.loglevels.OFF) {
-          value = logger.loglevels.OFF;
-        }
-        if (value > logger.loglevels.ALL) {
-          value = logger.loglevels.ALL;
-        }
-        return Object.keys(logger.loglevels).find((level) => logger.loglevels[level] === value);
-      }
-      //if loglevel is given as a string, uppercase it to match "choices".
-      else if (typeof value === "string") {
-        return value.toUpperCase();
-      }
-      //if flag is set but without argument, <value> is set to "true" and that should throw an exception as an argument is required with the option.
-      else {
-        if (value) {
-          throw new Error(formatter.error("Invalid argument supplied to log-level option."));
-        }
+      if (value) {
+        return convertInputToLogLevel(value);
       }
     },
+  })
+  .option("check-updates", {
+    describe: "Sets whether the command should check for updates before executing.",
+    type: "boolean",
   })
   .middleware([
     (argv, yargs) => {
       loadDeployerConfigMiddleware(argv);
     },
     (argv, yargs) => {
-      setloglevelMiddleware(argv);
+      setLogLevelMiddleware(argv);
     },
     async (argv, yargs) => {
-      await checkForUpdatesMiddleware();
+      await checkForUpdatesMiddleware(argv);
     },
   ])
   .demandCommand()
   .commandDir("bin/cmds")
   .help()
-  .group(["q", "l", "help", "version"], "Global options:")
+  .group(["q", "l", "help", "version", "check-updates"], "Global options:")
   .fail((msg, e, yargs) => {
     /* 
-      Yargs does not consistently put the error message into <msg> so we have to extract it from the error ourselves
-      `e` will look like this:  
-          
-      Error: <ERROR_MESSAGE>
-        stacktrace line 1
-        stacktrace line 2
+        Yargs does not consistently put the error message into <msg>. When that happens, we have to extract it from the error ourselves
+        `e` will look like this:  
+            
+        Error: <ERROR_MESSAGE>
+          stacktrace line 1
+          stacktrace line 2
+  
+        e.toString() returns "Error: <ERROR_MESSAGE>"
+      */
 
-      e.toString() returns "Error: <ERROR_MESSAGE>"
-    */
-    const errorMessage = /Error: (.*)/g.exec(e.toString())[1];
-
-    logger.fatal(formatter.error(errorMessage));
-    logger.debug(e);
-    logger.info(
-      "\nFor help with the command run it with the `--help` flag, or visit the documentation."
-    );
+    if (msg) {
+      const errorMessage = msg;
+      logger.fatal(formatter.error(errorMessage));
+      logger.debug("", formatter.error(e));
+      yargs.showHelp();
+    } else if (e) {
+      const errorMessage = /Error: ([\s\S]*)/.exec(e.toString())[1];
+      logger.fatal(formatter.error(errorMessage));
+      logger.debug("", formatter.error(e));
+      logger.info(
+        "\nFor help with the command run it with the `--help` flag, or visit the documentation."
+      );
+    } else {
+      yargs.showHelp();
+    }
     exit(1);
   })
   .wrap(90).argv;
