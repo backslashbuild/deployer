@@ -164,7 +164,6 @@ async function checkForUpdatesMiddleware(argv) {
     }
   }
 
-  logger.fatal(formatter.warning("CHECK"));
   let remotePackageJson;
   try {
     remotePackageJson = await getRemotePackageJson();
