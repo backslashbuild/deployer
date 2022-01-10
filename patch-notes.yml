@@ -83,4 +83,10 @@
   - note: "Fix: `-l` flag not working as expected when deploying multiple services."
   - note: "Fix: Keys in global deployer config that do not exist in default config are deleted."
   - note: "Fix: Deploying multiple images in parallel using `up` command no longer prints update message multiple times."
-    
+2.3.1:
+  date: 10-01-2022
+  notes:
+  - note: "Build: Use exact version of \"colors @1.4.0\" following an intentionally breaking change included in a patch on 08/01/2022."
+    children:
+    - note: "https://www.bleepingcomputer.com/news/security/dev-corrupts-npm-libs-colors-and-faker-breaking-thousands-of-apps/"
+    - note: "https://github.com/Marak/colors.js/blob/074a0f8ed0c31c35d13d28632bd8a049ff136fb6/lib/index.js"
